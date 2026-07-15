@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MatchMetrics - Analyses mathematiques pour optimiser vos paris sportifs">
+<title>MatchMetrics</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#00ff88;--primary-dark:#00cc6a;--primary-light:#66ffbb;--secondary:#ff2d55;--secondary-light:#ff6b8a;--accent-orange:#ff6b35;--accent-gold:#ffd700;--bg:#0d0b1a;--bg-card:rgba(20,15,40,0.7);--bg-card-hover:rgba(30,25,55,0.85);--text:#fff;--text-sec:#b0a8d0;--text-muted:#7a72a0;--border:rgba(255,255,255,0.08);--border-glow:rgba(0,255,136,0.15);--glass-bg:rgba(20,15,40,0.6);--glass-border:rgba(255,255,255,0.08);--glass-shadow:0 8px 32px rgba(0,0,0,0.4);--r-sm:8px;--r-md:14px;--r-lg:22px;--tr:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 30%,rgba(255,45,85,0.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,255,136,0.05) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(255,107,53,0.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--primary),var(--secondary));border-radius:4px}
+.accent{color:var(--primary)}
+.glow-text{background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.glow-border{box-shadow:0 0 20px var(--border-glow),inset 0 0 20px rgba(0,255,136,0.03)}
+.container{max-width:1200px;margin:0 auto;padding:0 2rem}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+button{font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 1.75rem;border:none;border-radius:50px;font-size:.95rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent-gold),var(--secondary));opacity:0;transition:var(--tr)}
+.btn-primary:hover::before{opacity:1}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 25px rgba(0,255,136,0.35)}
+.btn-primary i,.btn-primary span{position:relative;z-index:1}
+.btn-outline{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,0.12);border-radius:50px;padding:.85rem 1.75rem;font-size:.95rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-2px);box-shadow:0 0 20px rgba(0,255,136,0.15)}
+.btn-full{width:100%;justify-content:center}
+.navbar{position:fixed;top:0;left:260px;right:0;z-index:1000;padding:1rem 0;transition:var(--tr)}
+.navbar.scrolled{background:rgba(13,11,26,0.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--glass-border);padding:.75rem 0;box-shadow:0 4px 30px rgba(0,0,0,0.3)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:.5rem;font-size:1.3rem;font-weight:800}
+.nav-logo i{font-size:1.5rem;animation:spin 4s linear infinite;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px rgba(0,255,136,0.3))}
+.nav-right{display:flex;align-items:center;gap:.5rem}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:.5rem}
+.hamburger span{width:24px;height:2px;background:var(--text);border-radius:2px;transition:var(--tr)}
+.page{display:none;padding-top:5rem;margin-left:260px}
+.page.active{display:block;animation:pageIn .4s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0}5%{opacity:.4}95%{opacity:.4}100%{transform:translateY(-10vh) rotate(720deg);opacity:0}}
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(0,255,136,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,255,136,0.05) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(0,255,136,0.03) 0%,transparent 50%);z-index:2;pointer-events:none}
+.hero-overlay{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 50% 30%,rgba(13,11,26,0.2) 0%,transparent 60%),radial-gradient(ellipse at 50% 80%,rgba(0,255,136,0.08) 0%,transparent 50%),linear-gradient(180deg,rgba(13,11,26,0.3) 0%,rgba(13,11,26,0.6) 50%,rgba(13,11,26,0.9) 100%);pointer-events:none}
+.hero-content{position:relative;z-index:3;text-align:center;width:100%}
+.hero-badge{display:inline-flex;align-items:center;gap:.6rem;padding:.6rem 1.5rem;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.2);border-radius:50px;font-size:.9rem;font-weight:700;color:var(--primary);margin-bottom:1.5rem;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 0 30px rgba(0,255,136,0.06)}
+.hero-title{display:flex;flex-direction:column;gap:.25rem;margin-bottom:1.25rem}
+.text-line{display:block;font-size:clamp(2.2rem,7vw,5rem);font-weight:900;line-height:1.1}
+.text-line:first-child{font-size:clamp(1rem,2.5vw,1.6rem);font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text-sec)}
+.text-line.accent{font-size:clamp(2.5rem,8vw,6rem);background:linear-gradient(135deg,var(--primary) 0%,var(--accent-gold) 40%,var(--secondary) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 40px rgba(0,255,136,0.3));animation:glowPulse 3s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 30px rgba(0,255,136,0.2))}50%{filter:drop-shadow(0 0 60px rgba(0,255,136,0.5))}}
+.hero-subtitle{font-size:clamp(1rem,1.8vw,1.2rem);color:var(--text-sec);max-width:650px;margin:0 auto 2rem;line-height:1.6}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.hero-btns .btn{font-weight:700;padding:.95rem 2rem}
+#particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+#particles .particle{position:absolute;width:4px;height:4px;background:var(--primary);border-radius:50%;opacity:0;animation:float linear infinite}
+.section{padding:5rem 0}
+.section-header{text-align:center;margin-bottom:3rem}
+.section-header h2{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--text),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-header p{color:var(--text-sec);font-size:1.05rem;margin-top:.5rem}
+.page-sep{width:80px;height:3px;background:linear-gradient(90deg,transparent,var(--primary),var(--secondary),transparent);margin:0 auto 3rem;border-radius:2px;box-shadow:0 0 12px rgba(0,255,136,0.2)}
+.page-alt{background:rgba(255,255,255,0.01);position:relative;z-index:1}
+.page-alt::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,255,136,0.02) 0%,transparent 60%);pointer-events:none;z-index:0}
+.features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+.feature-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2rem;transition:var(--tr);text-align:center;position:relative;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--glass-shadow)}
+.feature-card:hover{transform:translateY(-5px);border-color:var(--primary);box-shadow:0 8px 40px rgba(0,255,136,0.12),var(--glass-shadow)}
+.feature-icon{width:64px;height:64px;background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(255,45,85,0.08));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:var(--primary);box-shadow:0 0 20px rgba(0,255,136,0.06);transition:var(--tr)}
+.feature-card:hover .feature-icon{box-shadow:0 0 30px rgba(0,255,136,0.12);transform:scale(1.05)}
+.feature-card h3{font-size:1.1rem;font-weight:700;margin-bottom:.5rem}
+.feature-card p{font-size:.9rem;color:var(--text-sec)}
+.step-num{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;box-shadow:0 0 16px rgba(0,255,136,0.3)}
+.history-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:3rem}
+.chart-box{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:2rem;margin-bottom:2rem;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.chart-box h3{font-size:1.1rem;font-weight:700;margin-bottom:1rem}
+.chart-box canvas{width:100%!important;height:300px!important}
+.prono-date{text-align:center;margin-bottom:2.5rem}
+.prono-date .badge{display:inline-flex;align-items:center;gap:.6rem;padding:.6rem 1.5rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18);border-radius:50px;font-size:.95rem;font-weight:600;color:var(--primary);backdrop-filter:blur(8px)}
+.prono-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.25rem}
+.prono-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:1.5rem;transition:var(--tr);position:relative;overflow:hidden;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--glass-shadow)}
+.prono-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary));opacity:0;transition:var(--tr)}
+.prono-card:hover{transform:translateY(-4px);border-color:rgba(0,255,136,0.25);box-shadow:0 12px 48px rgba(0,0,0,0.3),0 0 30px rgba(0,255,136,0.06)}
+.prono-card:hover::before{opacity:1}
+.prono-teams{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.prono-team{display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:1;text-align:center}
+.team-badge{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;transition:var(--tr)}
+.team-badge.home{background:linear-gradient(135deg,rgba(0,255,136,0.15),rgba(0,204,106,0.08));color:var(--primary);border:2px solid rgba(0,255,136,0.2)}
+.team-badge.away{background:rgba(255,255,255,0.05);color:var(--text-sec);border:2px solid var(--border)}
+.team-name{font-size:.85rem;font-weight:600;max-width:110px;line-height:1.3}
+.prono-vs span{font-size:.8rem;font-weight:800;color:var(--text-muted);padding:.25rem .5rem;background:rgba(255,255,255,0.03);border-radius:8px}
+.prono-result{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:.6rem 1rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:50px;margin-top:.75rem;font-size:.85rem;font-weight:700;color:var(--primary);backdrop-filter:blur(8px)}
+.prono-hot{position:absolute;top:0;right:0;background:linear-gradient(135deg,var(--secondary),#cc0033);color:#fff;padding:.3rem .9rem;border-radius:0 var(--r-lg) 0 var(--r-md);font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;z-index:2;animation:hotPulse 1.5s ease-in-out infinite}
+@keyframes hotPulse{0%,100%{box-shadow:0 0 8px rgba(255,45,85,0.4)}50%{box-shadow:0 0 20px rgba(255,45,85,0.8)}}
+.prono-card.hot-card{border-color:rgba(255,45,85,0.35)}
+.prono-card.hot-card::before{background:linear-gradient(90deg,var(--secondary),#ff7043);opacity:1}
+
+.prono-card{position:relative;overflow:hidden}
+.prono-card-glow{position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent,rgba(0,255,136,0.04),transparent,rgba(255,45,85,0.03),transparent);animation:borderGlow 6s linear infinite;pointer-events:none;opacity:0;transition:var(--tr)}
+.prono-card:hover .prono-card-glow{opacity:1}
+.prono-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:.5rem}
+.prono-comp{font-size:.75rem;font-weight:700;color:var(--primary);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.15);padding:.3rem .7rem;border-radius:50px;display:inline-flex;align-items:center;gap:.35rem;backdrop-filter:blur(4px)}
+.prono-time{font-size:.75rem;color:var(--text-muted);display:inline-flex;align-items:center;gap:.3rem}
+.team-badge-lg{width:58px;height:58px;font-size:1.1rem}
+.prono-score{font-size:1.6rem;font-weight:900;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums;line-height:1}
+.prono-vs-label{font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
+.prono-detail{background:rgba(0,0,0,0.2);border-radius:var(--r-md);padding:.85rem 1rem;margin-top:.75rem}
+.prono-detail-row{display:flex;align-items:center;justify-content:space-between;padding:.3rem 0}
+.prono-detail-row:first-child{border-bottom:1px solid rgba(255,255,255,0.04);padding-bottom:.5rem;margin-bottom:.3rem}
+.prono-detail-label{font-size:.8rem;color:var(--text-muted);display:inline-flex;align-items:center;gap:.35rem}
+.prono-detail-value{font-size:.85rem;font-weight:700;color:var(--text)}
+.prono-odds{color:var(--primary);font-size:.95rem;font-weight:800}
+.prono-card-footer{margin-top:1rem;display:flex;align-items:center;gap:.5rem}
+.prono-confiance{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .8rem;border-radius:50px;font-size:.75rem;font-weight:700}
+.prono-confiance.haut{background:rgba(0,255,136,0.08);color:var(--primary);border:1px solid rgba(0,255,136,0.18);backdrop-filter:blur(4px)}
+.prono-confiance.moyen{background:rgba(255,193,7,0.08);color:#ffc107;border:1px solid rgba(255,193,7,0.18);backdrop-filter:blur(4px)}
+.results-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.5rem}
+.stat-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:1.5rem;text-align:center;transition:var(--tr);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.stat-card:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,255,136,0.1),var(--glass-shadow)}
+.stat-card .big{font-size:2.5rem;font-weight:900;color:var(--primary);display:block;line-height:1}
+.stat-card .label{font-size:.8rem;color:var(--text-muted);margin-top:.4rem;display:block}
+.stat-card.hl{border-color:var(--primary);background:linear-gradient(135deg,rgba(0,255,136,0.08),rgba(255,45,85,0.04));box-shadow:0 0 24px rgba(0,255,136,0.04),var(--glass-shadow)}
+.stat-won .big{color:#4caf50}
+.stat-lost .big{color:#ef5350}
+.stat-pending .big{color:#ffc107}
+.results-controls{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+.results-filters{display:flex;gap:.5rem;flex-wrap:wrap}
+.filter-btn{padding:.5rem 1rem;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--text-sec);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.filter-btn:hover{border-color:var(--primary);color:var(--primary)}
+.filter-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);border-color:transparent;box-shadow:0 0 16px rgba(0,255,136,0.2)}
+.results-list{display:flex;flex-direction:column;gap:.75rem}
+.result-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:1.25rem 1.5rem;transition:var(--tr);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.result-card:hover{border-color:rgba(0,255,136,0.25);box-shadow:0 8px 32px rgba(0,0,0,0.25),0 0 20px rgba(0,255,136,0.05)}
+.result-card.s-won{border-left:4px solid #4caf50}
+.result-card.s-lost{border-left:4px solid #ef5350}
+.result-card.s-pending{border-left:4px solid #ffc107}
+.rc-match{flex:1;min-width:200px}
+.rc-date{font-size:.75rem;color:var(--text-muted);margin-bottom:.25rem}
+.rc-teams{font-size:1rem;font-weight:700}
+.rc-teams .vs{color:var(--text-muted);font-weight:400;margin:0 .3rem}
+.rc-pred{font-size:.85rem;color:var(--text-sec);margin-top:.2rem}
+.rc-pred i{color:var(--primary);margin-right:.3rem}
+.rc-status{min-width:100px;text-align:center}
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border-radius:50px;font-size:.8rem;font-weight:700}
+.status-badge.won{background:rgba(76,175,80,0.15);color:#4caf50}
+.status-badge.lost{background:rgba(239,83,80,0.15);color:#ef5350}
+.status-badge.pending{background:rgba(255,193,7,0.15);color:#ffc107}
+.rc-actions{display:flex;gap:.4rem}
+.action-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.action-btn:hover{border-color:var(--primary);color:var(--primary)}
+.action-btn.w:hover{border-color:#4caf50;color:#4caf50}
+.action-btn.l:hover{border-color:#ef5350;color:#ef5350}
+.action-btn.d:hover{border-color:#ef5350;color:#ef5350}
+.results-empty{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+.results-empty i{font-size:3rem;margin-bottom:1rem;display:block;color:var(--border)}
+.blog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.blog-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);overflow:hidden;transition:var(--tr);cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.blog-card:hover{transform:translateY(-5px);border-color:rgba(0,255,136,0.25);box-shadow:0 12px 48px rgba(0,0,0,0.3),0 0 30px rgba(0,255,136,0.06)}
+.blog-img{position:relative;height:200px;overflow:hidden}
+.blog-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.blog-card:hover .blog-img img{transform:scale(1.08)}
+.blog-cat{position:absolute;top:.75rem;left:.75rem;padding:.3rem .85rem;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase;box-shadow:0 0 16px rgba(0,255,136,0.15)}
+.blog-body{padding:1.5rem}
+.blog-meta{display:flex;gap:1rem;margin-bottom:.75rem;font-size:.78rem;color:var(--text-muted)}
+.blog-meta i{color:var(--primary);margin-right:.3rem}
+.blog-card h3{font-size:1.1rem;font-weight:700;margin-bottom:.6rem;line-height:1.4;transition:color .3s}
+.blog-card:hover h3{background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.blog-card p{font-size:.9rem;color:var(--text-sec);line-height:1.6;margin-bottom:1rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.blog-more{display:inline-flex;align-items:center;gap:.4rem;color:var(--primary);font-size:.85rem;font-weight:600;transition:gap .3s}
+.blog-more:hover{gap:.75rem}
+.blog-featured{grid-column:1/-1;display:grid;grid-template-columns:1.2fr 1fr}
+.blog-featured .blog-img{height:100%;min-height:300px}
+.blog-featured .blog-body{display:flex;flex-direction:column;justify-content:center;padding:2rem}
+.blog-featured h3{font-size:1.4rem}
+.article-page{max-width:800px;margin:0 auto}
+.article-back{display:inline-flex;align-items:center;gap:.5rem;color:var(--text-sec);font-size:.9rem;font-weight:600;margin-bottom:2rem;transition:var(--tr);cursor:pointer;background:none;border:none;font-family:inherit}
+.article-back:hover{color:var(--primary);gap:.75rem}
+.article-hero-img{width:100%;height:400px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:2rem}
+.article-hero-img img{width:100%;height:100%;object-fit:cover}
+.article-cat{display:inline-block;padding:.3rem .85rem;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase;margin-bottom:1rem;box-shadow:0 0 16px rgba(0,255,136,0.15)}
+.article-title{font-size:2rem;font-weight:800;line-height:1.3;margin-bottom:1rem}
+.article-meta{display:flex;gap:1.5rem;color:var(--text-muted);font-size:.85rem;margin-bottom:2rem}
+.article-meta i{color:var(--primary);margin-right:.3rem}
+.article-content{font-size:1.05rem;color:var(--text-sec);line-height:1.8}
+.article-content h3{font-size:1.3rem;font-weight:700;color:var(--text);margin:2rem 0 .75rem}
+.article-content p{margin-bottom:1rem}
+.article-content ul{margin:.5rem 0 1rem 1.5rem}
+.article-content ul li{margin-bottom:.5rem}
+.article-content blockquote{border-left:3px solid var(--primary);padding:1rem 1.5rem;background:rgba(0,255,136,0.05);border-radius:0 var(--r-sm) var(--r-sm) 0;margin:1.5rem 0;font-style:italic}
+.faq-list{max-width:800px;margin:0 auto}
+.faq-item{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);margin-bottom:.75rem;overflow:hidden;transition:var(--tr);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.faq-item:hover{border-color:var(--primary);box-shadow:0 8px 32px rgba(0,0,0,0.2),0 0 20px rgba(0,255,136,0.04)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;cursor:pointer;font-weight:600;font-size:1rem;transition:var(--tr)}
+.faq-q:hover{color:var(--primary)}
+.faq-q i{transition:transform .3s ease;font-size:.85rem;color:var(--text-muted)}
+.faq-item.active .faq-q i{transform:rotate(180deg);color:var(--primary)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.faq-a-inner{padding:0 1.5rem 1.25rem;color:var(--text-sec);font-size:.95rem;line-height:1.7}
+.contact-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:3rem}
+.contact-info{display:flex;flex-direction:column;gap:1rem}
+.contact-card{display:flex;align-items:flex-start;gap:1rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:1.25rem;transition:var(--tr);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.contact-card:hover{border-color:var(--primary);box-shadow:0 8px 32px rgba(0,0,0,0.25),0 0 20px rgba(0,255,136,0.05)}
+.cc-icon{width:44px;height:44px;background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(255,45,85,0.08));border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:1rem;flex-shrink:0;box-shadow:0 0 16px rgba(0,255,136,0.05)}
+.contact-card h4{font-size:.95rem;font-weight:700;margin-bottom:.15rem}
+.contact-card p{font-size:.85rem;color:var(--text-sec)}
+.contact-form-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2rem;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--glass-shadow)}
+.footer{background:rgba(13,11,26,0.95);border-top:1px solid var(--glass-border);padding:4rem 0 2rem;margin-left:260px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2rem;margin-bottom:3rem}
+.footer-brand p{color:var(--text-sec);font-size:.9rem;margin:1rem 0}
+.footer h4{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.footer-links{list-style:none}
+.footer-links li{margin-bottom:.5rem}
+.footer-links a{color:var(--text-sec);font-size:.9rem;transition:var(--tr)}
+.footer-links a:hover{color:var(--primary)}
+.footer-bottom{text-align:center;padding-top:2rem;border-top:1px solid var(--border)}
+.footer-bottom p{color:var(--text-muted);font-size:.8rem;margin-bottom:.3rem}
+.legal-modal{position:fixed;inset:0;z-index:20000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.legal-modal.active{display:flex}
+.legal-modal-content{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2rem;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;position:relative;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.legal-modal-content h2{font-size:1.5rem;font-weight:800;margin-bottom:1rem;color:var(--primary)}
+.legal-modal-content h3{font-size:1.1rem;font-weight:700;margin:1.5rem 0 .5rem}
+.legal-modal-content p{font-size:.9rem;color:var(--text-sec);line-height:1.7;margin-bottom:.5rem}
+.legal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;transition:var(--tr)}
+.legal-close:hover{color:var(--primary)}
+.ai-chat{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999}
+.ai-toggle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;color:var(--bg);font-size:1.5rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,255,136,0.35);position:relative}
+.ai-toggle::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--primary);box-shadow:0 0 12px rgba(0,255,136,0.2);animation:ping 1.5s ease infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+.ai-window{position:absolute;bottom:70px;right:0;width:380px;height:520px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(0,255,136,0.04);display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:scale(0.9) translateY(10px);transition:var(--tr);overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.ai-window.active{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
+.ai-header{display:flex;align-items:center;gap:.75rem;padding:1rem;border-bottom:1px solid var(--glass-border);background:linear-gradient(135deg,rgba(0,255,136,0.05),rgba(255,45,85,0.03))}
+.ai-avatar{width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--bg);font-size:1.1rem}
+.ai-header-info{flex:1}
+.ai-header-info h4{font-size:.95rem;font-weight:700}
+.ai-header-info span{font-size:.75rem;color:var(--primary);display:flex;align-items:center;gap:.3rem}
+.ai-header-info span::before{content:'';width:6px;height:6px;background:var(--primary);border-radius:50%}
+.ai-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem}
+.ai-close:hover{color:var(--text)}
+.ai-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.75rem}
+.ai-msg{max-width:85%;padding:.75rem 1rem;border-radius:16px;font-size:.9rem;line-height:1.5}
+.ai-msg.bot{background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.12);align-self:flex-start;border-bottom-left-radius:4px;backdrop-filter:blur(8px)}
+.ai-msg.user{background:var(--primary);color:var(--bg);align-self:flex-end;border-bottom-right-radius:4px}
+.ai-suggestions{display:flex;gap:.5rem;padding:0 1rem .75rem;overflow-x:auto}
+.sug-btn{white-space:nowrap;padding:.4rem .75rem;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.18);border-radius:50px;color:var(--primary);font-size:.75rem;cursor:pointer;transition:var(--tr);font-family:inherit;backdrop-filter:blur(4px)}
+.sug-btn:hover{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--bg);border-color:transparent}
+.ai-input{display:flex;gap:.5rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.ai-input input{flex:1;padding:.65rem 1rem;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:.9rem}
+.ai-input input:focus{outline:none;border-color:var(--primary)}
+.ai-send{width:40px;height:40px;background:var(--primary);border:none;border-radius:50%;color:var(--bg);cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center}
+.ai-send:hover{background:var(--primary-dark);transform:scale(1.05)}
+.vip-plan-wrapper{display:flex;justify-content:center}
+.vip-plan-card{background:var(--glass-bg);border:2px solid rgba(255,215,0,0.2);border-radius:var(--r-lg);padding:2.5rem;max-width:460px;width:100%;text-align:center;position:relative;overflow:hidden;transition:var(--tr);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--glass-shadow),0 0 40px rgba(255,215,0,0.04)}
+.vip-plan-card:hover{border-color:rgba(255,215,0,0.5);transform:translateY(-4px);box-shadow:0 16px 56px rgba(0,0,0,0.35),0 0 60px rgba(255,215,0,0.08)}
+.vip-plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#ffd700,#ffaa00,#ffd700)}
+.vip-plan-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1.2rem;background:linear-gradient(135deg,#ffd700,#ffaa00);color:#1a1a1a;border-radius:50px;font-size:.85rem;font-weight:800;letter-spacing:.05em;margin-bottom:1.5rem}
+.vip-plan-price{font-size:3rem;font-weight:900;background:linear-gradient(135deg,#ffd700,#ffaa00,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:.5rem;filter:drop-shadow(0 0 20px rgba(255,215,0,0.3))}
+.vip-plan-price span{font-size:1rem;font-weight:600;color:var(--text-sec)}
+.vip-plan-desc{font-size:.9rem;color:var(--text-muted);margin-bottom:1.5rem}
+.vip-plan-features{list-style:none;padding:0;margin:0 0 2rem;text-align:left}
+.vip-plan-features li{padding:.5rem 0;font-size:.9rem;color:var(--text-sec);display:flex;align-items:center;gap:.6rem}
+.vip-plan-features li i{color:#ffd700;font-size:.85rem}
+.vip-cta{font-size:1rem;padding:.9rem 1.5rem;gap:.5rem}
+.history-entries{display:flex;flex-direction:column;gap:1.5rem;margin-top:2rem}
+.history-entry{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--glass-shadow)}
+.history-entry-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;background:rgba(0,255,136,0.04);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem}
+.history-entry-date{font-weight:700;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.history-entry-date i{color:var(--primary)}
+.history-entry-stats{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.h-stat{font-size:.8rem;font-weight:600;padding:.3rem .7rem;border-radius:50px;display:inline-flex;align-items:center;gap:.3rem}
+.h-won{background:rgba(76,175,80,0.12);color:#4caf50}
+.h-lost{background:rgba(239,83,80,0.12);color:#ef5350}
+.h-pending{background:rgba(255,193,7,0.12);color:#ffc107}
+.h-pct{background:rgba(0,255,136,0.12);color:var(--primary);font-weight:800}
+.history-pred-list{padding:.75rem 1.5rem}
+.history-pred-item{display:flex;align-items:center;gap:1rem;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,0.03);flex-wrap:wrap}
+.history-pred-item:last-child{border-bottom:none}
+.hpi-match{font-weight:600;font-size:.95rem;min-width:200px;flex:1}
+.hpi-match .vs{color:var(--text-muted);font-weight:400}
+.hpi-pred{font-size:.85rem;color:var(--text-sec);display:flex;align-items:center;gap:.3rem}
+.hpi-pred i{color:var(--primary)}
+.hpi-won{border-left:3px solid #4caf50;padding-left:1rem}
+.hpi-lost{border-left:3px solid #ef5350;padding-left:1rem}
+.hpi-pending{border-left:3px solid #ffc107;padding-left:1rem}
+.history-actions{display:flex;gap:.75rem;margin-top:1.5rem;justify-content:center}
+.history-clear-btn{padding:.5rem 1rem;border-radius:50px;border:1px solid rgba(239,83,80,0.3);background:transparent;color:#ef5350;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--tr);display:inline-flex;align-items:center;gap:.4rem}
+.history-clear-btn:hover{background:rgba(239,83,80,0.1)}
+.history-export-btn{padding:.5rem 1rem;border-radius:50px;border:1px solid rgba(0,255,136,0.3);background:transparent;color:var(--primary);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--tr);display:inline-flex;align-items:center;gap:.4rem}
+.history-export-btn:hover{background:rgba(0,255,136,0.1)}
+.sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:rgba(13,11,26,0.95);border-right:1px solid var(--glass-border);z-index:1001;display:flex;flex-direction:column;overflow-y:auto;transition:transform .3s cubic-bezier(0.4,0,0.2,1);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.sidebar-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
+.sidebar-header .nav-logo{font-size:1.2rem}
+.sidebar-nav{flex:1;padding:.75rem 0;display:flex;flex-direction:column;gap:2px}
+.sidebar-link{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--text-sec);font-size:.9rem;font-weight:500;transition:var(--tr);border-left:3px solid transparent;text-decoration:none}
+.sidebar-link:hover{color:var(--primary);background:rgba(0,255,136,0.05)}
+.sidebar-link.active{color:var(--primary);background:rgba(0,255,136,0.08);border-left-color:var(--primary);font-weight:600;box-shadow:inset 0 0 20px rgba(0,255,136,0.03)}
+.sidebar-link i{width:20px;text-align:center;font-size:.9rem}
+.sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.75rem}
+.sidebar-user{display:flex;align-items:center;gap:.5rem;color:var(--text-sec);font-size:.85rem;font-weight:500}
+.sidebar-user i{color:var(--primary);font-size:1.1rem}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000}
+body.auth-locked .sidebar-link{opacity:0.5}
+body.auth-locked .sidebar-link::after{content:'\f023';font-family:'Font Awesome 6 Free';font-weight:900;margin-left:auto;font-size:.75rem;color:var(--text-muted)}
+.auth-area{display:flex;align-items:center;gap:.5rem}
+.btn-sm{padding:.4rem .9rem;font-size:.8rem}
+.hidden{display:none!important}
+.user-menu{display:flex;align-items:center;gap:.6rem}
+.user-menu.hidden{display:none}
+.user-name{font-size:.85rem;font-weight:600;color:var(--primary);white-space:nowrap}
+.login-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:9999;align-items:center;justify-content:center}
+.login-overlay.active{display:flex}
+.login-overlay.full-lock{z-index:99999}
+.login-overlay.full-lock .login-close{display:none}
+.login-modal{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2.5rem;width:90%;max-width:400px;position:relative;animation:fadeUp .3s ease;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(0,255,136,0.05)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.login-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;transition:var(--tr)}
+.login-close:hover{color:var(--primary)}
+.login-header{text-align:center;margin-bottom:2rem}
+.login-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(0,255,136,0.12),rgba(255,45,85,0.08));border:2px solid rgba(0,255,136,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:var(--primary);box-shadow:0 0 24px rgba(0,255,136,0.08)}
+.login-header h3{font-size:1.3rem;font-weight:700;margin-bottom:.3rem}
+.login-header p{font-size:.85rem;color:var(--text-muted)}
+.login-field{margin-bottom:1.2rem}
+.login-field label{display:block;font-size:.8rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem}
+.login-field input{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:inherit;font-size:.9rem;transition:var(--tr);box-sizing:border-box}
+.login-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,255,136,0.1)}
+.login-pwd-wrap{position:relative}
+.pwd-toggle{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;transition:var(--tr)}
+.pwd-toggle:hover{color:var(--primary)}
+.login-error{background:rgba(239,83,80,0.1);border:1px solid rgba(239,83,80,0.3);color:#ef5350;padding:.6rem 1rem;border-radius:var(--r-md);font-size:.85rem;margin-bottom:1rem;text-align:center}
+.login-error.hidden{display:none}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.85rem 1rem;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:inherit;font-size:.95rem;transition:var(--tr)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,255,136,0.1)}
+.pricing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;max-width:800px;margin:0 auto}
+.pricing-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2.5rem;text-align:center;transition:var(--tr);position:relative;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--glass-shadow)}
+.pricing-card:hover{border-color:var(--primary);transform:translateY(-5px);box-shadow:0 12px 48px rgba(0,255,136,0.1),var(--glass-shadow)}
+.pricing-card.popular{border-color:var(--primary);box-shadow:0 0 30px rgba(0,255,136,0.12),var(--glass-shadow)}
+.pricing-card.popular::before{content:'Populaire';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--primary);color:var(--bg);padding:.3rem 1.2rem;border-radius:50px;font-size:.75rem;font-weight:700}
+.plan-name{font-size:1.2rem;font-weight:700;margin-bottom:.5rem}
+.plan-price{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:1rem 0;filter:drop-shadow(0 0 16px rgba(0,255,136,0.2))}
+.plan-price span{font-size:1rem;font-weight:500;color:var(--text-muted)}
+.plan-features{list-style:none;text-align:left;margin-bottom:2rem}
+.plan-features li{padding:.6rem 0;font-size:.9rem;color:var(--text-sec);display:flex;align-items:center;gap:.75rem;border-bottom:1px solid var(--border)}
+.plan-features li:last-child{border-bottom:none}
+.plan-features li i{color:var(--primary);font-size:.85rem;filter:drop-shadow(0 0 6px rgba(0,255,136,0.3))}
+@media(max-width:1200px){.features-grid,.history-summary{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:992px){.sidebar{transform:translateX(-100%);z-index:2000}.sidebar.active{transform:translateX(0)}.sidebar-overlay.active{display:block;z-index:1999}.navbar{left:0}.page,.footer{margin-left:0}.hamburger{display:flex}.contact-grid,.pricing-grid{grid-template-columns:1fr}.blog-grid{grid-template-columns:repeat(2,1fr)}.blog-featured{grid-template-columns:1fr}.blog-featured .blog-img{min-height:220px}}
+@media(max-width:768px){.hero-btns{flex-direction:column;align-items:center}.features-grid,.history-summary,.footer-grid,.pricing-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.ai-window{width:calc(100vw - 2rem);right:-1rem}.results-summary{grid-template-columns:repeat(2,1fr)}.results-controls{flex-direction:column;align-items:stretch}.result-card{flex-direction:column;align-items:flex-start}}
+@media(max-width:576px){.section{padding:3rem 0}.container{padding:0 1rem}.blog-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<a href="#accueil" class="nav-logo"><i class="fas fa-futbol"></i><span>Match<span class="accent">Metrics</span></span></a>
+</div>
+<nav class="sidebar-nav" id="sidebarNav">
+<a href="#accueil" class="sidebar-link active"><i class="fas fa-home"></i> Accueil</a>
+<a href="#comment" class="sidebar-link"><i class="fas fa-lightbulb"></i> Comment ca marche</a>
+<a href="#historique" class="sidebar-link"><i class="fas fa-chart-bar"></i> Historique</a>
+<a href="#pronostics" class="sidebar-link"><i class="fas fa-trophy"></i> Pronostics</a>
+<a href="#resultats" class="sidebar-link"><i class="fas fa-square-poll-vertical"></i> Resultats</a>
+<a href="#inscription" class="sidebar-link"><i class="fas fa-user-plus"></i> Inscription</a>
+<a href="#blog" class="sidebar-link"><i class="fas fa-newspaper"></i> Blog</a>
+<a href="#faq" class="sidebar-link"><i class="fas fa-circle-question"></i> FAQ</a>
+<a href="#contact" class="sidebar-link"><i class="fas fa-headset"></i> Support</a>
+</nav>
+<div class="sidebar-footer hidden" id="sidebarFooter">
+<div class="sidebar-user"><i class="fas fa-user-circle"></i> <span id="sidebarUserName">-</span></div>
+<button class="btn btn-outline btn-sm btn-full" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Deconnexion</button>
+</div>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+<div class="nav-inner">
+<button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+<div class="nav-right">
+<div class="auth-area">
+<button class="btn btn-primary btn-sm" id="loginBtn" onclick="openLoginModal()"><i class="fas fa-user"></i> Connexion</button>
+<div class="user-menu hidden" id="userMenu">
+<span class="user-name" id="userName"><i class="fas fa-user-circle"></i> <span id="userNameText">-</span></span>
+<button class="btn btn-outline btn-sm" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Deconnexion</button>
+</div>
+</div>
+</div>
+</div>
+</nav>
+
+<!-- PAGE ACCUEIL -->
+<section class="page active" id="page-accueil">
+<div class="hero" id="hero">
+<div class="hero-overlay"></div>
+<div id="particles"></div>
+<div class="container hero-content">
+<div class="hero-badge"><i class="fas fa-chart-line"></i> Analyses & Pronostics VIP</div>
+<h1 class="hero-title">
+<span class="text-line">BIENVENUE DANS L'UNIVERS</span>
+<span class="text-line accent">METRICS VIP</span>
+</h1>
+<p class="hero-subtitle">Analyses Mathematiques &amp; Intelligence Artificielle pour des Paris Sportifs Optimises</p>
+<div class="hero-btns">
+<a href="#historique" class="btn btn-primary"><i class="fas fa-chart-line"></i> Voir l'Historique</a>
+<a href="#pronostics" class="btn-outline"><i class="fas fa-play-circle"></i> Voir les Pronostics</a>
+</div>
+</div>
+</div>
+<div class="section page-alt" style="padding:3rem 0">
+<div class="container">
+<div class="section-header" style="margin-bottom:2rem">
+<div class="page-sep"></div>
+<h2>Fiabilité des <span class="accent">Pronostics</span></h2>
+<p>Probabilités et indice de confiance de nos analyses</p>
+</div>
+<div class="features-grid" style="grid-template-columns:repeat(4,1fr);gap:1rem">
+<div class="stat-card hl"><span class="big">84</span><span class="big" style="font-size:1.5rem;display:inline;color:var(--primary)">%</span><span class="label" style="margin-top:.75rem">Fiabilité globale</span><p style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem">Taux de reussite moyen</p></div>
+<div class="stat-card"><span class="big">7/7</span><span class="label" style="margin-top:.75rem">Derniers pronostics</span><p style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem">100% de reussite</p></div>
+<div class="stat-card"><span class="big">87</span><span class="big" style="font-size:1.5rem;display:inline;color:var(--primary)">%</span><span class="label" style="margin-top:.75rem">Indice de confiance</span><p style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem">Moyenne ponderee</p></div>
+<div class="stat-card"><span class="big">Haute</span><span class="label" style="margin-top:.75rem">Probabilité de gain</span><p style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem">Analyses approfondies</p></div>
+</div>
+</div>
+</div>
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Passez en <span class="accent">VIP</span></h2>
+<p>Devenez membre premium et maximisez vos gains</p>
+</div>
+<div class="vip-plan-wrapper">
+<div class="vip-plan-card">
+<div class="vip-plan-badge"><i class="fas fa-crown"></i> VIP</div>
+<div class="vip-plan-price">2 500 <span>FCFA/mois</span></div>
+<div class="vip-plan-desc">Acces illimite a toutes nos analyses premium</div>
+<ul class="vip-plan-features">
+<li><i class="fas fa-check-circle"></i> Pronostics analyses par IA</li>
+<li><i class="fas fa-check-circle"></i> Alertes en temps reel</li>
+<li><i class="fas fa-check-circle"></i> Historique complet des performances</li>
+<li><i class="fas fa-check-circle"></i> Support VIP prioritaire 24/7</li>
+<li><i class="fas fa-check-circle"></i> Statistiques avancees et graphiques</li>
+</ul>
+<a href="https://wa.me/2290161845845?text=Bonjour%2C%20je%20veux%20souscrire%20au%20plan%20VIP%20Premium%20MatchMetrics" target="_blank" rel="noopener" class="btn btn-primary btn-full vip-cta">
+<i class="fab fa-whatsapp"></i> Souscrire via WhatsApp</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PAGE COMMENT -->
+<section class="page page-alt" id="page-comment">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Comment ca <span class="accent">marche</span> ?</h2>
+<p>Un processus rigoureux base sur les mathematiques et les donnees</p>
+</div>
+<div class="features-grid">
+<div class="feature-card"><div class="step-num">1</div><div class="feature-icon"><i class="fas fa-database"></i></div><h3>Collecte de donnees</h3><p>Notre systeme recupere en temps reel les statistiques de plus de 500 ligues.</p></div>
+<div class="feature-card"><div class="step-num">2</div><div class="feature-icon"><i class="fas fa-brain"></i></div><h3>Modeles statistiques</h3><p>Des algorithmes de regression, Poisson et ELO calculent les probabilites sur 50 000 matchs.</p></div>
+<div class="feature-card"><div class="step-num">3</div><div class="feature-icon"><i class="fas fa-chart-pie"></i></div><h3>Calcul de confiance</h3><p>Chaque analyse recoit un indice de confiance (0-100%) base sur l'ecart-type des modeles.</p></div>
+<div class="feature-card"><div class="step-num">4</div><div class="feature-icon"><i class="fas fa-bullseye"></i></div><h3>Pronostic final</h3><p>Seules les analyses avec un EV+ positif et une confiance superieure a 70% sont publiees.</p></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PAGE HISTORIQUE -->
+<section class="page page-alt" id="page-historique">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Historique de <span class="accent">Performance</span></h2>
+<p>Suivi dynamique de nos performances sur les 30 derniers jours</p>
+</div>
+<div class="history-summary">
+<div class="stat-card hl"><span class="big" data-target="84">0</span><span class="label">% Reussite global</span></div>
+<div class="stat-card"><span class="big" data-target="312">0</span><span class="label">Pronostics gagnes</span></div>
+<div class="stat-card"><span class="big" data-target="58">0</span><span class="label">Pronostics perdus</span></div>
+<div class="stat-card"><span class="big" data-target="370">0</span><span class="label">Total analyses</span></div>
+</div>
+<div class="chart-box"><h3><i class="fas fa-chart-line" style="color:var(--primary)"></i> Evolution du taux de reussite (30 jours)</h3><canvas id="performanceChart"></canvas></div>
+<div class="chart-box"><h3><i class="fas fa-chart-bar" style="color:var(--primary)"></i> Pronostics par semaine</h3><canvas id="weeklyChart"></canvas></div>
+<div class="chart-box"><h3><i class="fas fa-chart-pie" style="color:var(--primary)"></i> Repartition par competition</h3><canvas id="leagueChart"></canvas></div>
+<div style="margin-top:3rem">
+<div class="page-sep"></div>
+
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PAGE PRONOSTICS -->
+<section class="page page-alt" id="page-pronostics">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Pronostics du <span class="accent">Jour</span></h2>
+<p>Nos analyses mathematiques pour les matchs du jour</p>
+</div>
+<div class="results-controls" style="margin-bottom:1.5rem">
+<div class="results-filters">
+<button class="filter-btn active" data-datefilter="all" onclick="filterPronostics('all')"><i class="fas fa-list"></i> Tous</button>
+<button class="filter-btn" data-datefilter="hier" onclick="filterPronostics('hier')"><i class="fas fa-calendar-day"></i> Hier</button>
+<button class="filter-btn" data-datefilter="today" onclick="filterPronostics('today')"><i class="fas fa-calendar-check"></i> Aujourd'hui</button>
+<button class="filter-btn" data-datefilter="upcoming" onclick="filterPronostics('upcoming')"><i class="fas fa-calendar-alt"></i> À venir</button>
+</div>
+</div>
+
+<div class="prono-grid">
+
+<!-- Match 1: France vs Spain -->
+<div class="prono-card hot-card" data-date="2026-07-14">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-trophy"></i> FIFA World Cup</span>
+<span class="prono-time"><i class="far fa-clock"></i> 22:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#002395,#002395);color:#fff;border:2px solid #ED2939">FR</div>
+<span class="team-name">France</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#C60B1E,#C60B1E);color:#FFC400;border:2px solid #FFC400">ES</div>
+<span class="team-name">Espagne</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">France Over +0.5 Goals</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.25</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance haut"><i class="fas fa-check-circle" style="color:#00ff88"></i> Gagné</span>
+</div>
+</div>
+
+<!-- Match 2: LASK Linz vs Fenerbahce -->
+<div class="prono-card" data-date="2026-07-14">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-futbol"></i> Club Friendlies</span>
+<span class="prono-time"><i class="far fa-clock"></i> 20:30</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#030,#030);color:#fff;border:2px solid #0a0">LK</div>
+<span class="team-name">LASK Linz</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">1 - 2</div>
+<span class="prono-vs-label">Full time</span>
+</div>
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#d4a017,#d4a017);color:#1a1a2e;border:2px solid #ffd700">FB</div>
+<span class="team-name">Fenerbahce</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Fenerbahce Over +1.5 Goals</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.55</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance moyen"><i class="fas fa-check-circle" style="color:#00ff88"></i> Gagné</span>
+</div>
+</div>
+
+<!-- Match 3: Riga FC vs FC Ararat-Armenia -->
+<div class="prono-card hot-card" data-date="2026-07-14">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-star"></i> UEFA Champions League, Qualif.</span>
+<span class="prono-time"><i class="far fa-clock"></i> 20:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#800020,#800020);color:#fff;border:2px solid #ffd700">RG</div>
+<span class="team-name">Riga FC (Lettonie)</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">3 - 4</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#d90000,#d90000);color:#fff;border:2px solid #0033a0">AA</div>
+<span class="team-name">FC Ararat-Armenia</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Over +1.5 Goals</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.30</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance haut"><i class="fas fa-check-circle" style="color:#00ff88"></i> Gagné (3-4)</span>
+</div>
+</div>
+
+<!-- Match 4: Borges vs Kouame (ATP) -->
+<div class="prono-card" data-date="2026-07-14">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-table-tennis-paddle-ball"></i> ATP Bastad, Sweden</span>
+<span class="prono-time"><i class="far fa-clock"></i> 15:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#1a5276,#1a5276);color:#fff;border:2px solid #2e86c1">BN</div>
+<span class="team-name">Borges, Nuno (Portugal)</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">6 - 2</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#6c3483,#6c3483);color:#fff;border:2px solid #af7ac5">KM</div>
+<span class="team-name">Kouame, Moise (France)</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Borges, Nuno Wins</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.35</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance haut"><i class="fas fa-check-circle" style="color:#00ff88"></i> Gagné (6-2)</span>
+</div>
+</div>
+
+<!-- Match 5: Universitatea Craiova vs ML Vitebsk -->
+<div class="prono-card" data-date="2026-07-15">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-futbol"></i> Club Friendlies</span>
+<span class="prono-time"><i class="far fa-clock"></i> 18:30</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#003d1f,#003d1f);color:#fff;border:2px solid #00a859">UC</div>
+<span class="team-name">Universitatea Craiova</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#d41b2c,#d41b2c);color:#fff;border:2px solid #ffd700">MV</div>
+<span class="team-name">ML Vitebsk</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Plus de 2,5 buts dans le match</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.70</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance haut"><i class="fas fa-shield-alt"></i> Confiance haute</span>
+</div>
+</div>
+
+<!-- Match 6: Atert Bissen vs KÍ Klaksvík -->
+<div class="prono-card" data-date="2026-07-15">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-futbol"></i> UEFA Conference League, Qualif.</span>
+<span class="prono-time"><i class="far fa-clock"></i> 19:15</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#e30613,#e30613);color:#fff;border:2px solid #ffd700">AB</div>
+<span class="team-name">Atert Bissen</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#003d88,#003d88);color:#fff;border:2px solid #ffd700">KK</div>
+<span class="team-name">KÍ Klaksvík</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">KÍ Klaksvík et Moins de 2,5 buts</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">2.10</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance moyen"><i class="fas fa-chart-simple"></i> Confiance moyenne</span>
+</div>
+</div>
+
+<!-- Match 7: Angleterre vs Argentine -->
+<div class="prono-card hot-card" data-date="2026-07-15">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-trophy"></i> FIFA World Cup</span>
+<span class="prono-time"><i class="far fa-clock"></i> 20:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#CE1124,#CE1124);color:#fff;border:2px solid #00247D">AN</div>
+<span class="team-name">Angleterre</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#6CB4EE,#6CB4EE);color:#fff;border:2px solid #FFD700">AR</div>
+<span class="team-name">Argentine</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Angleterre et Moins de 2,5 buts</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">2.50</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance moyen"><i class="fas fa-chart-simple"></i> Confiance moyenne</span>
+</div>
+</div>
+
+<!-- Match 8: Egnatia vs FC Petrocub -->
+<div class="prono-card" data-date="2026-07-15">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-futbol"></i> UEFA Conference League, Qualif.</span>
+<span class="prono-time"><i class="far fa-clock"></i> 20:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#C8102E,#C8102E);color:#fff;border:2px solid #003DA5">EG</div>
+<span class="team-name">Egnatia</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#003D1F,#003D1F);color:#fff;border:2px solid #FFD700">FP</div>
+<span class="team-name">FC Petrocub</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Moins de 4,5 buts dans le match</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">1.30</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance haut"><i class="fas fa-shield-alt"></i> Confiance haute</span>
+</div>
+</div>
+
+<!-- Match 9: Sutjeska Nikšić vs Kairat Almaty -->
+<div class="prono-card" data-date="2026-07-15">
+<div class="prono-card-glow"></div>
+<div class="prono-card-top">
+<span class="prono-comp"><i class="fas fa-futbol"></i> UEFA Conference League, Qualif.</span>
+<span class="prono-time"><i class="far fa-clock"></i> 20:00</span>
+</div>
+<div class="prono-teams">
+<div class="prono-team">
+<div class="team-badge home team-badge-lg" style="background:linear-gradient(135deg,#003da5,#003da5);color:#fff;border:2px solid #ffd700">SN</div>
+<span class="team-name">Sutjeska Nikšić</span>
+</div>
+<div class="prono-vs">
+<div class="prono-score">0 - 0</div>
+<span class="prono-vs-label">VS</span>
+</div>
+<div class="prono-team">
+<div class="team-badge away team-badge-lg" style="background:linear-gradient(135deg,#d41b2c,#d41b2c);color:#fff;border:2px solid #ffd700">KA</div>
+<span class="team-name">Kairat Almaty</span>
+</div>
+</div>
+<div class="prono-detail">
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-bullseye"></i> Pronostic</span>
+<span class="prono-detail-value">Victoire de Sutjeska Nikšić et Moins de 2,5 buts</span>
+</div>
+<div class="prono-detail-row">
+<span class="prono-detail-label"><i class="fas fa-chart-line"></i> Cote</span>
+<span class="prono-detail-value prono-odds">2.80</span>
+</div>
+</div>
+<div class="prono-card-footer">
+<span class="prono-confiance moyen"><i class="fas fa-chart-simple"></i> Confiance moyenne</span>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<!-- PAGE RESULTATS -->
+<section class="page" id="page-resultats">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Resultats des <span class="accent">Pronostics</span></h2>
+<p>Tous les pronostics ont ete resolves. Consultez les resultats ci-dessous.</p>
+</div>
+<div class="results-summary" id="resultsSummary">
+<div class="stat-card hl"><span class="big" id="resTotal">0</span><span class="label">Total Pronostics</span></div>
+<div class="stat-card stat-won"><span class="big" id="resWon">0</span><span class="label">Gagnes</span></div>
+<div class="stat-card stat-lost"><span class="big" id="resLost">0</span><span class="label">Perdus</span></div>
+<div class="stat-card stat-pending"><span class="big" id="resPending">0</span><span class="label">En attente</span></div>
+</div>
+<div class="results-controls">
+<div class="results-filters">
+<button class="filter-btn active" data-filter="all" onclick="filterResults('all')"><i class="fas fa-list"></i> Tous</button>
+<button class="filter-btn" data-filter="pending" onclick="filterResults('pending')"><i class="fas fa-clock"></i> En attente</button>
+<button class="filter-btn" data-filter="won" onclick="filterResults('won')"><i class="fas fa-check-circle"></i> Gagnes</button>
+<button class="filter-btn" data-filter="lost" onclick="filterResults('lost')"><i class="fas fa-times-circle"></i> Perdus</button>
+</div>
+<div class="results-filters" style="margin-top:.5rem">
+<button class="filter-btn active" data-datefilter="all" onclick="filterResultsByDate('all')"><i class="fas fa-list"></i> Toutes dates</button>
+<button class="filter-btn" data-datefilter="hier" onclick="filterResultsByDate('hier')"><i class="fas fa-calendar-day"></i> Hier</button>
+<button class="filter-btn" data-datefilter="today" onclick="filterResultsByDate('today')"><i class="fas fa-calendar-check"></i> Aujourd'hui</button>
+<button class="filter-btn" data-datefilter="upcoming" onclick="filterResultsByDate('upcoming')"><i class="fas fa-calendar-alt"></i> À venir</button>
+</div>
+</div>
+<div class="results-list" id="resultsList"></div>
+</div>
+</div>
+</section>
+
+<!-- PAGE BLOG -->
+<section class="page page-alt" id="page-blog">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Notre <span class="accent">Blog</span></h2>
+<p>Actualites, transferts et resultats du monde du football</p>
+</div>
+<div class="blog-grid">
+<article class="blog-card blog-featured">
+<div class="blog-img"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOt5_67Dn6T2pHqh4wNdTejBE64a1IHjU5z0vg2Uy9aQ&s=10" alt="France vs Espagne Live"><span class="blog-cat" style="background:#ff2d55">EN DIRECT</span></div>
+<div class="blog-body">
+<div class="blog-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> Live</span></div>
+<h3>🔴 En Direct : France - Espagne, le choc des titans à Dallas !</h3>
+<p>C'est le Jour J pour l'équipe de France. Les Bleus de Deschamps défient l'Espagne au Dallas Stadium pour une place en finale.</p>
+<a href="#article-6" class="blog-more">Lire la suite <i class="fas fa-arrow-right"></i></a>
+</div>
+</article>
+<article class="blog-card">
+<div class="blog-img"><img src="https://img.youtube.com/vi/NQso9p1pl9E/hqdefault.jpg" alt="France vs Espagne Resultat"><span class="blog-cat">Coupe du Monde</span></div>
+<div class="blog-body">
+<div class="blog-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 5 min</span></div>
+<h3>Le rêve bleu se brise : l'Espagne élimine la France (2-0)</h3>
+<p>La France s'incline 2-0 face à l'Espagne en demi-finale de la Coupe du Monde 2026. Fin de l'ère Deschamps.</p>
+<a href="#article-7" class="blog-more">Lire la suite <i class="fas fa-arrow-right"></i></a>
+</div>
+</article>
+<article class="blog-card">
+<div class="blog-img"><img src="https://files.sofascore.com/news/2026/07/vuskovic-1024x576.jpg" alt="Luka Vuskovic Brighton"><span class="blog-cat">Mercato</span></div>
+<div class="blog-body">
+<div class="blog-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 6 min</span></div>
+<h3>Brighton recrute Luka Vuskovic : un transfert de 54 M€ fondé sur les chiffres</h3>
+<p>Brighton finalise la signature de Luka Vuskovic pour 54 M€. Le defenseur croate sort d'une saison revelatrice au Hambourg SV.</p>
+<a href="#article-4" class="blog-more">Lire la suite <i class="fas fa-arrow-right"></i></a>
+</div>
+</article>
+<article class="blog-card">
+<div class="blog-img"><img src="https://files.sofascore.com/news/2026/07/Mbappe-vs-Yamaln-1024x576.png" alt="France vs Espagne"><span class="blog-cat">Coupe du Monde</span></div>
+<div class="blog-body">
+<div class="blog-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 8 min</span></div>
+<h3>France vs Espagne : l'affiche des demi-finales de la Coupe du Monde 2026</h3>
+<p>Les deux equipes s'affrontent a Arlington dans une demi-finale aux allures de finale. Stats, formes, face-a-face et cles du match.</p>
+<a href="#article-5" class="blog-more">Lire la suite <i class="fas fa-arrow-right"></i></a>
+</div>
+</article>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ARTICLES -->
+<section class="page" id="page-article-4"><div class="section"><div class="container"><div class="article-page"><a href="#blog" class="article-back"><i class="fas fa-arrow-left"></i> Retour au Blog</a><div class="article-hero-img"><img src="https://files.sofascore.com/news/2026/07/vuskovic-1024x576.jpg" alt="Luka Vuskovic"></div><span class="article-cat">Mercato</span><h1 class="article-title">Brighton recrute Luka Vuskovic : un transfert de 54 M€ fondé sur les chiffres</h1><div class="article-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 6 min</span></div><div class="article-content"><p>Brighton & Hove Albion a finalise la signature de Luka Vuskovic en provenance de Tottenham Hotspur pour un montant de 54 M€. L'international croate arrive en tant que defenseur central droitier, mesurant 193 cm et portant le numero 16. Il sort d'une saison revelatrice a Hambourg SV et s'apprete desormais a faire ses preuves en Premier League.</p><p>Pour les supporters de Brighton qui suivent les transferts sur Sofascore, il s'agit d'un dossier a suivre de pres.</p><h3>Les details du transfert et leur importance</h3><p>L'operation voit Tottenham transferer Vuskovic a Brighton pour 54 M€, apres l'avoir initialement recrute aupres du HNK Hajduk Split pour 11 M€. Tottenham l'avait prete pour lui offrir du temps de jeu, notamment lors d'un passage productif a Hambourg SV. Cette transaction constitue une importante vente sortante pour les Spurs et libere la voie a d'autres defenseurs centraux.</p><p>Pour Brighton, il s'agit d'un investissement defensif majeur, integre dans un plan a long terme sous la houlette de l'entraineur Fabian Hurzeler. Les Seagulls ont termine 8e de Premier League avec 53 points, avec 52 buts inscrits et 46 concedes en 38 journees. Leur forme recente fut en dents de scie, avec des victoires 3-0 contre Chelsea et Wolverhampton, mais des defaites contre Newcastle, Leeds et Manchester United. L'ajout d'un defenseur central au fort potentiel vise autant la stabilite que la valeur sur coups de pied arretes. Ce recrutement s'inscrit egalement dans le modele de Brighton, qui consiste a attirer de jeunes talents a fort impact immediat.</p><p>Une infographie montre un footballeur en tenue du HSV avec des statistiques defensives par match et une chronologie de carriere se cloturant sur un transfert a Brighton ; la preparation a la Premier League est mise en avant.</p><h3>Ce que sa saison a Hambourg SV nous revele</h3><p>Avec Hambourg SV lors de la saison 2025/26 en Bundesliga, Vuskovic a dispute 28 matches de championnat, accumulant 2441 minutes de jeu. Sa Note Sofascore sur l'ensemble de ces rencontres s'eleve a 7,28, portee par un volume defensif solide et une technique propre. Il a remporte 149 duels aériens avec un taux de reussite de 74,5 % et a signe 251 degagements ainsi que 40 interceptions. Il a egalement gagne 18 de ses 22 tacles, soit un taux de 81,82 % qui temoigne d'un excellent timing plus que d'interventions desesperees. Dans la relance, il a tente 1534 passes avec une precision de 83,05 %, dont 88 longues passes reussies et 11 passes cles. Offensivement, il a inscrit 6 buts en championnat, dont 2 de la tete, 1 coup franc direct et 1 penalty transforme. Son profil de tirs revele 24 tentatives dans la surface et 8 en dehors, pour un taux de conversion de 18,75 %. Sa vitesse de pointe a atteint 32,74 km/h, et il a figure deux fois dans L'equipe de la semaine, ce qui complete une production equilibree pour un adolescent.</p></div></div></div></div></section>
+<section class="page" id="page-article-5"><div class="section"><div class="container"><div class="article-page"><a href="#blog" class="article-back"><i class="fas fa-arrow-left"></i> Retour au Blog</a><div class="article-hero-img"><img src="https://files.sofascore.com/news/2026/07/Mbappe-vs-Yamaln-1024x576.png" alt="France vs Espagne"></div><span class="article-cat">Coupe du Monde</span><h1 class="article-title">France vs Espagne : l'affiche des demi-finales de la Coupe du Monde 2026</h1><div class="article-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 8 min</span></div><div class="article-content"><p>La France et l'Espagne s'affrontent a Arlington lors d'une demi-finale de Coupe du Monde de la FIFA qui a deja des allures de finale. Les deux equipes arrivent apres des parcours dominants, batis sur la maitrise et les clean sheets, n'ayant concede que trois buts a elles deux en six matchs chacune. La rencontre a lieu a l'AT&T Stadium, une pelouse rapide qui convient parfaitement a deux formations aimant le ballon et sachant bien l'utiliser.</p><p>Sur Sofascore, vous trouverez le momentum en direct, les compositions et chaque Note Sofascore au fil de cette affiche de prestige.</p><h3>Verification de la forme et chiffres cles</h3><p>La France a inscrit 16 buts et n'en a encaisse que 2 en six rencontres, avec quatre clean sheets et 58,5 % de possession moyenne. Les Bleus ont tente 110 tirs, dont 47 cadres, cree 17 grosses occasions et inscrit trois buts en contre sur 16 contre-attaques. Leur precision est affutee avec 88,4 % de passes reussies sur 3339 passes totales, completee par une forte presence aerienne avec 67,8 % de duels remportes dans les airs. Defensivement, la solidite est aussi au rendez-vous avec seulement 38 tirs concedes, dont 10 cadres.</p><p>L'Espagne affiche un volume de tirs similaire avec 110 tentatives, mais conjugue cela a une maitrise encore plus grande. La Roja tourne a 65,8 % de possession et 90,4 % de passes reussies sur 3971 passes. Elle a marque 11 fois, encaisse un seul but et signe cinq clean sheets, n'accordant que 34 tirs adverses (sept cadres). Le jeu de centres espagnol est egalement actif, avec 130 centres et 20 % de precision, ainsi que 44 corners remportes — un leger avantage sur les 41 de la France.</p><h3>Face a face et dernieres confrontations</h3><p>L'histoire penche cote espagnol avec six victoires contre trois pour la France dans leur duel direct, plus un match nul. Les deux derniers affrontements termines etaient serres et animes : Espagne 5-4 France en finale de Ligue des Nations et Espagne 2-1 France en phase finale de l'Euro. Mais la France a remporte la finale de la Ligue des Nations 2021 (2-1), les deux nations affichant donc de recentes references au plus haut niveau. Les statistiques recentes signalent que la France reste sur quatre matchs d'affilee sans clean sheet dans ce duel, et l'Espagne sur trois.</p><p>Discipline et gestion des coups de pied arretes influencent souvent ces rencontres. Neuf des dix derniers face a face se sont conclus sous 4,5 cartons au total, et cinq des six derniers sous 10,5 corners. Ces tendances refletent les series generales des deux equipes, souvent sous ces seuils. Attendez-vous a de longues phases de possession patiente, mais sur chaque transition, le danger peut surgir tres vite.</p><h3>Compositions et zones a surveiller</h3><p>Les deux selections s'organisent en 4-2-3-1. La France devrait aligner Ousmane Dembele, Michael Olise et Desire Doue derriere Kylian Mbappe en attaque. L'Espagne positionne Lamine Yamal, Dani Olmo et Alex Baena en soutien a Mikel Oyarzabal, tandis que Rodri et Pedri menent le milieu. Les duels s'annoncent passionnants : Mbappe devrait exploiter l'espace entre Pedro Porro et Pau Cubarsi, tandis que Dembele testera le timing de Marc Cucurella sur l'aile opposee.</p><p>Au milieu, Manu Kone et Adrien Rabiot se retrouveront face a Rodri et Pedri pour la bataille du tempo et de la conquete du terrain. La defense francaise, composee de Jules Kounde, Dayot Upamecano, William Saliba et Lucas Digne, a parfaitement gere la pression, Upamecano et Saliba realisant ensemble 46 degagements. Cote espagnol, Laporte et Cubarsi assurent sous pression avec respectivement 461 et 521 passes precises. L'equipe qui cassera la premiere le pressing adverse aura un net avantage sur cette demi-finale.</p></div></div></div></div></section>
+
+<section class="page" id="page-article-6"><div class="section"><div class="container"><div class="article-page"><a href="#blog" class="article-back"><i class="fas fa-arrow-left"></i> Retour au Blog</a><div class="article-hero-img"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOt5_67Dn6T2pHqh4wNdTejBE64a1IHjU5z0vg2Uy9aQ&s=10" alt="France vs Espagne Live"></div><span class="article-cat" style="background:#ff2d55">EN DIRECT</span><h1 class="article-title">🔴 En Direct : France - Espagne, le choc des titans à Dallas !</h1><div class="article-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> Live</span></div><div class="article-content"><p>C'est le Jour J pour l'équipe de France. En ce jour de fête nationale, les Bleus de Didier Deschamps défient la redoutable équipe d'Espagne au Dallas Stadium (AT&T Stadium) d'Arlington pour une place en finale de la Coupe du Monde de la FIFA 2026™.</p><p>L'ambiance est absolument électrique dans une enceinte texane comble de 94 000 spectateurs, à l'abri de la chaleur grâce au toit fermé et climatisé.</p><h3>Un début de match sous contrôle espagnol</h3><p>Dès les premières secondes, les intentions de la Roja de Luis de la Fuente sont limpides : confisquer le ballon et dicter le tempo. Privés de cuir, les Bleus courent après la balle et subissent le pressing haut des Espagnols, emmenés par un milieu de terrain souverain articulé autour de Rodri. L'Espagne affiche déjà une possession écrasante de près de 65%.</p><p>La tension physique s'est immédiatement fait ressentir sur la pelouse. Preuve de cette entame de match disputée, le milieu de terrain tricolore Adrien Rabiot a écopé du tout premier avertissement de la partie dès la 9e minute après une intervention à retardement. Les hommes de Didier Deschamps vont devoir faire preuve de beaucoup de discipline pour ne pas se laisser submerger par la maîtrise technique ibérique.</p></div></div></div></div></section>
+<section class="page" id="page-article-7"><div class="section"><div class="container"><div class="article-page"><a href="#blog" class="article-back"><i class="fas fa-arrow-left"></i> Retour au Blog</a><div class="article-hero-img"><img src="https://img.youtube.com/vi/NQso9p1pl9E/hqdefault.jpg" alt="France vs Espagne"></div><span class="article-cat">Coupe du Monde</span><h1 class="article-title">Le rêve bleu se brise le 14 juillet : l'Espagne élimine la France aux portes de la finale de la Coupe du Monde</h1><div class="article-meta"><span><i class="fas fa-calendar"></i> 14 Juillet 2026</span><span><i class="fas fa-clock"></i> 5 min</span></div><div class="article-content"><p>Le jour de la fête nationale aura finalement un goût de cendre pour le football français. Ce mardi 14 juillet 2026, l'équipe de France s'est inclinée 2-0 face à l'Espagne en demi-finale de la Coupe du Monde de la FIFA 2026™ au Stade de Dallas. Dominés par une Roja d'une maîtrise collective impressionnante, les Bleus n'ont pas réussi à décrocher leur billet pour une troisième finale mondiale consécutive.</p><h3>Le film du match : Une domination espagnole sans partage</h3><p>Dès le début de la rencontre, le plan de jeu espagnol s'est mis en place avec une possession de balle étouffante. La défense tricolore, bousculée, a rapidement concédé l'ouverture du score :</p><p><strong>22ème minute (1-0) :</strong> Après une faute d'Adrien Rabiot dans la surface de réparation, l'attaquant espagnol Mikel Oyarzabal transforme sereinement son penalty face à Mike Maignan.</p><p><strong>58ème minute (2-0) :</strong> Au retour des vestiaires, alors que la France tentait de réagir, le défenseur espagnol Pedro Porro double la mise d'une frappe limpide, assommant définitivement les espoirs français.</p><p>Malgré les changements offensifs opérés par Didier Deschamps — notamment l'entrée en jeu des jeunes Rayan Cherki et Désiré Doué — les Bleus n'ont jamais trouvé la clé pour bousculer le bloc ibérique bien orchestré par Rodri. Kylian Mbappé, surveillé de très près par la défense adverse, a reconnu après la rencontre la supériorité globale de l'Espagne sur ce match.</p><h3>La fin d'une ère pour Didier Deschamps</h3><p>Cette défaite marque également un tournant historique pour le football français puisqu'il s'agissait du dernier match de Didier Deschamps à la tête de l'équipe de France. Après 14 années d'un mandat exceptionnel marqué par le sacre mondial de 2018 et la Ligue des Nations 2021, le sélectionneur emblématique quitte les Bleus sur cette élimination aux portes de la finale.</p><h3>Prochaine étape : La médaille de bronze en ligne de mire</h3><p>L'aventure américaine n'est pas tout à fait terminée pour la bande à Mbappé. L'équipe de France s'envolera pour la Floride afin de disputer la petite finale (match pour la 3ème place) :</p><p><strong>Date & Heure :</strong> Samedi 18 juillet 2026 à 23h00 (heure de Paris / France)<br><strong>Lieu :</strong> Hard Rock Stadium, Miami<br><strong>Adversaire :</strong> Le perdant de la seconde demi-finale opposant l'Argentine de Lionel Messi à l'Angleterre de Harry Kane.</p><div class="article-video" style="margin:1.5rem 0"><a href="https://youtu.be/NQso9p1pl9E" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.5rem;background:var(--primary);color:#fff;padding:.75rem 1.5rem;border-radius:8px;text-decoration:none;font-weight:600"><i class="fab fa-youtube" style="font-size:1.3rem"></i> Voir le résumé du match sur YouTube</a></div></div></div></div></div></section>
+
+<!-- PAGE FAQ -->
+<section class="page" id="page-faq">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Questions <span class="accent">Frequentes</span></h2>
+<p>Trouvez rapidement reponse a vos questions</p>
+</div>
+<div class="faq-list" id="faqList">
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Comment fonctionne le systeme d'analyses ? <i class="fas fa-chevron-down"></i></div><div class="faq-a"><div class="faq-a-inner">Notre systeme utilise des modeles statistiques (Poisson, regression logistique, ELO) qui analysent plus de 200 variables par match.</div></div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Quel est le taux de reussite reel ? <i class="fas fa-chevron-down"></i></div><div class="faq-a"><div class="faq-a-inner">Sur les 30 derniers jours, notre taux de reussite moyen est de 84%. Verifiable dans la page Historique.</div></div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Combien coute l'abonnement premium ? <i class="fas fa-chevron-down"></i></div><div class="faq-a"><div class="faq-a-inner">L'abonnement premium coute 2 500 FCFA par mois. Acces complet, alertes temps reel, historique et support 24/7.</div></div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Quand sont publies les analyses ? <i class="fas fa-chevron-down"></i></div><div class="faq-a"><div class="faq-a-inner">Les analyses sont mises a jour chaque jour a 10h00. Des analyses supplementaires a 16h00 pour les matchs du soir.</div></div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Vos analyses sont-elles des garanties de gain ? <i class="fas fa-chevron-down"></i></div><div class="faq-a"><div class="faq-a-inner">Non. Aucun systeme ne peut garantir 100% de reussite. Pariez de maniere responsable.</div></div></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PAGE CONTACT -->
+<section class="page page-alt" id="page-contact">
+<div class="section">
+<div class="container">
+<div class="section-header">
+<div class="page-sep"></div>
+<h2>Support <span class="accent">Client</span></h2>
+<p>Une question ? Besoin d'aide ? Notre equipe vous repond sous 24h</p>
+</div>
+<div class="contact-grid">
+<div class="contact-info">
+<div class="contact-card"><div class="cc-icon"><i class="fas fa-envelope"></i></div><div><h4>Email</h4><p>contact@matchmetrics.fr</p></div></div>
+<div class="contact-card"><div class="cc-icon"><i class="fas fa-headset"></i></div><div><h4>Support Prioritaire</h4><p>support@matchmetrics.fr</p></div></div>
+<div class="contact-card"><div class="cc-icon"><i class="fab fa-whatsapp"></i></div><div><h4>WhatsApp</h4><p>+225 07 08 09 10</p></div></div>
+</div>
+<div class="contact-form-card">
+<h3 style="margin-bottom:1.5rem;font-size:1.2rem">Envoyez-nous un message</h3>
+<form id="contactForm">
+<div class="form-row">
+<div class="form-group"><label>Prenom</label><input type="text" placeholder="Votre prenom" required></div>
+<div class="form-group"><label>Nom</label><input type="text" placeholder="Votre nom" required></div>
+</div>
+<div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com" required></div>
+<div class="form-group"><label>Message</label><textarea rows="5" placeholder="Votre message..." required></textarea></div>
+<button type="submit" class="btn btn-primary btn-full"><i class="fas fa-paper-plane"></i> Envoyer le message</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer" id="siteFooter">
+<div class="container">
+<div class="footer-grid">
+<div class="footer-brand">
+<a href="#accueil" class="nav-logo"><i class="fas fa-futbol"></i><span>Match<span class="accent">Metrics</span></span></a>
+<p>Analyses mathematiques rigoureuses pour optimiser vos paris sportifs.</p>
+</div>
+<div>
+<h4>Navigation</h4>
+<ul class="footer-links">
+<li><a href="#accueil">Accueil</a></li>
+<li><a href="#comment">Comment ca marche</a></li>
+<li><a href="#historique">Historique</a></li>
+<li><a href="#pronostics">Pronostics</a></li>
+<li><a href="#resultats">Resultats</a></li>
+<li><a href="#blog">Blog</a></li>
+<li><a href="#faq">FAQ</a></li>
+<li><a href="#contact">Support</a></li>
+</ul>
+</div>
+<div>
+<h4>Legal</h4>
+<ul class="footer-links">
+<li><a href="#" onclick="openLegal('mentions');return false">Mentions Legales</a></li>
+<li><a href="#" onclick="openLegal('confidentialite');return false">Politique de Confidentialite</a></li>
+<li><a href="#" onclick="openLegal('cgu');return false">CGU</a></li>
+</ul>
+</div>
+</div>
+<div class="footer-bottom">
+<p>&copy; 2026 MatchMetrics. Tous droits reserves.</p>
+<p>Les analyses sont fournies a titre informatif uniquement. Jouez de maniere responsable. +18</p>
+</div>
+</div>
+</footer>
+
+<!-- LEGAL MODALS -->
+<div class="legal-modal" id="modal-mentions"><div class="legal-modal-content"><button class="legal-close" onclick="closeLegal()"><i class="fas fa-times"></i></button><h2>Mentions Legales</h2><p>MatchMetrics SAS - Cocody, Abidjan, Cote d'Ivoire</p></div></div>
+<div class="legal-modal" id="modal-confidentialite"><div class="legal-modal-content"><button class="legal-close" onclick="closeLegal()"><i class="fas fa-times"></i></button><h2>Politique de Confidentialite</h2><p>Collecte des donnees : nom, email, historique de connexion. Utilisation : gestion du compte, envoi d'analyses.</p></div></div>
+<div class="legal-modal" id="modal-cgu"><div class="legal-modal-content"><button class="legal-close" onclick="closeLegal()"><i class="fas fa-times"></i></button><h2>CGU</h2><p>Inscription ouverte aux majeurs (18+). Premium : 2 500 FCFA/mois. Analyses a titre informatif uniquement.</p></div></div>
+
+<!-- AI CHAT -->
+<div class="ai-chat">
+<button class="ai-toggle" id="aiToggle"><i class="fas fa-robot"></i></button>
+<div class="ai-window" id="aiWindow">
+<div class="ai-header">
+<div class="ai-avatar"><i class="fas fa-robot"></i></div>
+<div class="ai-header-info"><h4>Assistant IA</h4><span>En ligne</span></div>
+<button class="ai-close" id="aiClose"><i class="fas fa-times"></i></button>
+</div>
+<div class="ai-msgs" id="aiMsgs">
+<div class="ai-msg bot">Bonjour ! Je peux vous aider avec nos analyses, modeles, tarifs, ou support.</div>
+</div>
+<div class="ai-suggestions">
+<button class="sug-btn" data-msg="Quel est le taux de reussite ?">Taux de reussite</button>
+<button class="sug-btn" data-msg="Comment fonctionne votre IA ?">Fonctionnement IA</button>
+<button class="sug-btn" data-msg="Quels sont vos tarifs ?">Tarifs</button>
+</div>
+<div class="ai-input">
+<input type="text" id="aiInput" placeholder="Posez votre question...">
+<button class="ai-send" id="aiSend"><i class="fas fa-paper-plane"></i></button>
+</div>
+</div>
+</div>
+
+<!-- PAGE INSCRIPTION -->
+<section class="page" id="page-inscription">
+<div class="section" style="min-height:100vh;display:flex;align-items:center">
+<div class="container" style="max-width:500px">
+<div class="vip-card" style="background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:2.5rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)">
+<div class="text-center mb-8">
+<div class="brand-font" style="font-family:'Poppins',sans-serif;font-size:2rem;font-weight:800;background:linear-gradient(135deg,#d4af37,#f9e29c,#b8860b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">METRICS VIP</div>
+<p style="color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.2em;margin-top:.5rem">L'élite de l'analyse de données</p>
+</div>
+<div class="text-center mb-8">
+<h2 style="font-size:1.5rem;font-weight:600;color:#fff;margin-bottom:.5rem">Rejoignez le cercle</h2>
+<p style="color:var(--text-muted);font-size:.875rem">Créez votre compte pour accéder aux indicateurs premium.</p>
+</div>
+<form id="signupForm" style="display:flex;flex-direction:column;gap:1.25rem">
+<div class="login-field">
+<label><i class="fas fa-user"></i> Nom Complet</label>
+<input type="text" name="name" id="signupName" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-md);padding:.75rem 1rem;color:#fff;width:100%" placeholder="Jean Dupont">
+</div>
+<div class="login-field">
+<label><i class="fas fa-envelope"></i> Adresse Email</label>
+<input type="email" name="email" id="signupEmail" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-md);padding:.75rem 1rem;color:#fff;width:100%" placeholder="jean@example.com">
+</div>
+<div class="login-field">
+<label><i class="fas fa-lock"></i> Mot de passe</label>
+<input type="password" name="password" id="signupPass" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-md);padding:.75rem 1rem;color:#fff;width:100%" placeholder="••••••••">
+</div>
+<div style="display:flex;align-items:flex-start;gap:.75rem;font-size:.75rem;color:var(--text-muted)">
+<input type="checkbox" required style="margin-top:2px;width:1rem;height:1rem;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:transparent">
+<span>J'accepte les conditions d'accès exclusives et la politique de confidentialité de Metrics VIP.</span>
+</div>
+<button type="submit" style="background:linear-gradient(135deg,#d4af37,#b8860b);color:#000;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1rem;border-radius:var(--r-md);border:none;cursor:pointer;font-size:.875rem">Demander mon accès</button>
+</form>
+<p style="text-align:center;color:var(--text-muted);font-size:.75rem;margin-top:2rem">
+Déjà membre ? <a href="#" onclick="event.preventDefault();closeLoginModal();openLoginModal()" style="color:var(--primary);font-weight:600">Se connecter</a>
+</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- LOGIN MODAL -->
+<div class="login-overlay" id="loginOverlay">
+<div class="login-modal" onclick="event.stopPropagation()">
+<div class="login-header">
+<div class="login-icon"><i class="fas fa-user-lock"></i></div>
+<h3>Connexion</h3>
+<p>Accedez a votre espace VIP</p>
+</div>
+<form id="loginForm" onsubmit="return handleLogin(event)">
+<div class="login-field">
+<label><i class="fas fa-envelope"></i> Adresse Email</label>
+<input type="email" id="loginEmail" placeholder="vous@example.com" required autocomplete="email">
+</div>
+<div class="login-field">
+<label><i class="fas fa-lock"></i> Mot de passe</label>
+<div class="login-pwd-wrap">
+<input type="password" id="loginPass" placeholder="Votre mot de passe" required>
+<button type="button" class="pwd-toggle" onclick="togglePwd()"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="login-error hidden" id="loginError"><i class="fas fa-exclamation-circle"></i> Identifiants incorrects</div>
+<button type="submit" class="btn btn-primary btn-full"><i class="fas fa-right-to-bracket"></i> Se connecter</button>
+</form>
+<div style="text-align:center;margin-top:1rem;font-size:.8rem;color:var(--text-muted)">
+Pas encore de compte ? <a href="#" onclick="event.preventDefault();closeLoginModal();navigateTo('#inscription')" style="color:var(--primary);font-weight:600">S'inscrire</a>
+</div>
+</div>
+</div>
+
+<script>
+// ======== SUPABASE INIT ========
+const SUPABASE_URL = 'https://segykdacedteocdiwujr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_t5HYLhZetzbh57p4b5TLQQ_w9kzXSMp';
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ======== AUTH ========
+let currentSession = null;
+
+function isLoggedIn() { return !!currentSession; }
+
+function translateAuthError(msg) {
+    if (!msg) return 'Une erreur est survenue. Veuillez réessayer.';
+    const m = msg.toLowerCase();
+    if (m.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+    if (m.includes('user already registered') || m.includes('already registered')) return 'Un compte existe déjà avec cet email.';
+    if (m.includes('password should be at least')) return 'Le mot de passe doit contenir au moins 6 caractères.';
+    if (m.includes('unable to validate email') || m.includes('invalid email')) return 'Adresse email invalide.';
+    if (m.includes('email not confirmed')) return 'Veuillez confirmer votre email avant de vous connecter (vérifiez votre boîte mail).';
+    if (m.includes('rate limit')) return 'Trop de tentatives. Veuillez patienter avant de réessayer.';
+    return msg;
+}
+
+function updateAuthUI() {
+    const btn = document.getElementById('loginBtn');
+    const menu = document.getElementById('userMenu');
+    const sidebarFooter = document.getElementById('sidebarFooter');
+    if (isLoggedIn()) {
+        const u = currentSession.user;
+        const displayName = (u.user_metadata && u.user_metadata.full_name) ? u.user_metadata.full_name : u.email;
+        document.getElementById('userNameText').textContent = displayName;
+        document.getElementById('sidebarUserName').textContent = displayName;
+        document.body.classList.remove('auth-locked');
+        btn.classList.add('hidden');
+        menu.classList.remove('hidden');
+        sidebarFooter.classList.remove('hidden');
+    } else {
+        document.body.classList.add('auth-locked');
+        btn.classList.remove('hidden');
+        menu.classList.add('hidden');
+        sidebarFooter.classList.add('hidden');
+    }
+}
+
+function openLoginModal() { document.getElementById('loginOverlay').classList.add('active'); }
+function closeLoginModal() { document.getElementById('loginOverlay').classList.remove('active','full-lock'); document.getElementById('loginError').classList.add('hidden'); document.getElementById('loginForm').reset(); }
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion...';
+    const errorBox = document.getElementById('loginError');
+    errorBox.classList.add('hidden');
+
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
+
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalHTML;
+
+    if (error) {
+        errorBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + translateAuthError(error.message);
+        errorBox.classList.remove('hidden');
+        return false;
+    }
+
+    currentSession = data.session;
+    updateAuthUI();
+    closeLoginModal();
+    const hash = window.location.hash || '#accueil';
+    navigateTo(hash);
+    return false;
+}
+
+async function logout() {
+    await _sb.auth.signOut();
+    currentSession = null;
+    document.querySelectorAll('.page').forEach(s => s.classList.remove('active'));
+    updateAuthUI();
+    history.pushState(null, '', '#accueil');
+    navigateTo('#accueil');
+}
+
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const originalText = btn.innerText;
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPass').value;
+
+    btn.innerText = 'VÉRIFICATION...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+
+    const { data, error } = await _sb.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } }
+    });
+
+    btn.innerText = originalText;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+
+    if (error) {
+        alert("Erreur d'inscription : " + translateAuthError(error.message));
+        return;
+    }
+
+    if (data.session) {
+        currentSession = data.session;
+        updateAuthUI();
+        alert('Bienvenue ! Votre compte METRICS VIP a été créé et vous êtes connecté.');
+        e.target.reset();
+        closeLoginModal();
+        navigateTo('#accueil');
+    } else {
+        alert('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.');
+        e.target.reset();
+    }
+});
+
+function togglePwd() {
+    const input = document.getElementById('loginPass');
+    const icon = input.nextElementSibling.querySelector('i');
+    if (input.type === 'password') { input.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+    else { input.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+
+// ======== NAVIGATION ========
+const pageMap = { accueil:'page-accueil', comment:'page-comment', historique:'page-historique', pronostics:'page-pronostics', resultats:'page-resultats', inscription:'page-inscription', blog:'page-blog', faq:'page-faq', contact:'page-contact', 'article-4':'page-article-4', 'article-5':'page-article-5', 'article-6':'page-article-6', 'article-7':'page-article-7' };
+const navLinks = document.querySelectorAll('.sidebar-link');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const hamburger = document.getElementById('hamburger');
+const navbar = document.getElementById('navbar');
+let currentPage = 'accueil';
+const publicPages = ['inscription'];
+
+function navigateTo(hash) {
+    const page = hash.replace('#','') || 'accueil';
+    const id = pageMap[page];
+    if (!id) return;
+    if (!isLoggedIn() && publicPages.indexOf(page) === -1) {
+        openLoginModal();
+        return;
+    }
+    document.querySelectorAll('.page').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    navLinks.forEach(l => { l.classList.remove('active'); if (l.getAttribute('href') === '#' + page) l.classList.add('active'); });
+    if (sidebar) sidebar.classList.remove('active');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    window.scrollTo(0, 0);
+    if (page !== 'accueil') navbar.classList.add('scrolled'); else navbar.classList.remove('scrolled');
+    currentPage = page;
+    animateCounters(id);
+    if (page === 'inscription') document.getElementById('siteFooter').style.display = 'none';
+    else document.getElementById('siteFooter').style.display = '';
+    if (page === 'historique') drawCharts();
+    if (page === 'resultats') renderResults();
+}
+
+navLinks.forEach(l => l.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); const h = l.getAttribute('href'); history.pushState(null, '', h); navigateTo(h); }));
+hamburger.addEventListener('click', () => { sidebar.classList.toggle('active'); sidebarOverlay.classList.toggle('active'); });
+sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('active'); sidebarOverlay.classList.remove('active'); });
+
+document.addEventListener('click', e => {
+    if (e.target.closest('.sidebar-link') || e.target.closest('.ai-chat') || e.target.closest('.hamburger')) return;
+    if (e.target.closest('.blog-card')) {
+        const moreLink = e.target.closest('.blog-card').querySelector('.blog-more');
+        if (moreLink) {
+            const h = moreLink.getAttribute('href');
+            if (h && pageMap[h.replace('#','')]) { e.preventDefault(); history.pushState(null, '', h); navigateTo(h); }
+        }
+        return;
+    }
+    const link = e.target.closest('a[href^="#"]');
+    if (link) {
+        const h = link.getAttribute('href');
+        if (!h || h === '#') return;
+        if (pageMap[h.replace('#','')]) { e.preventDefault(); history.pushState(null, '', h); navigateTo(h); }
+        return;
+    }
+});
+
+window.addEventListener('popstate', () => navigateTo(window.location.hash || '#accueil'));
+window.addEventListener('hashchange', () => navigateTo(window.location.hash || '#accueil'));
+window.addEventListener('scroll', () => { if (currentPage === 'accueil' && window.scrollY > 50) navbar.classList.add('scrolled'); else if (currentPage === 'accueil') navbar.classList.remove('scrolled'); });
+
+// ======== COUNTDOWN ========
+
+// ======== PARTICLES ========
+function createParticles() {
+    const container = document.getElementById('particles');
+    if (!container) return;
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (15 + Math.random() * 25) + 's';
+        p.style.animationDelay = Math.random() * 20 + 's';
+        p.style.width = (2 + Math.random() * 4) + 'px';
+        p.style.height = p.style.width;
+        container.appendChild(p);
+    }
+}
+
+// ======== COUNTERS ========
+const countersAnimated = {};
+function animateCounters(pageId) {
+    const nums = document.querySelectorAll('#' + pageId + ' [data-target]');
+    if (!nums.length || countersAnimated[pageId]) return;
+    countersAnimated[pageId] = true;
+    nums.forEach(el => {
+        const target = parseInt(el.getAttribute('data-target'));
+        const start = performance.now();
+        function update(now) {
+            const p = Math.min((now - start) / 2000, 1);
+            el.textContent = Math.floor(target * (1 - Math.pow(1 - p, 3))).toLocaleString();
+            if (p < 1) requestAnimationFrame(update);
+            else el.textContent = target.toLocaleString();
+        }
+        requestAnimationFrame(update);
+    });
+}
+
+// ======== FAQ ========
+function toggleFaq(el) {
+    const item = el.parentElement, answer = item.querySelector('.faq-a'), isActive = item.classList.contains('active');
+    document.querySelectorAll('.faq-item').forEach(i => { i.classList.remove('active'); i.querySelector('.faq-a').style.maxHeight = '0'; });
+    if (!isActive) { item.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + 'px'; }
+}
+
+// ======== LEGAL ========
+function openLegal(t) { document.getElementById('modal-' + t).classList.add('active'); document.body.style.overflow = 'hidden'; }
+function closeLegal() { document.querySelectorAll('.legal-modal').forEach(m => m.classList.remove('active')); document.body.style.overflow = ''; }
+document.querySelectorAll('.legal-modal').forEach(m => m.addEventListener('click', function(e) { if (e.target === this) closeLegal(); }));
+
+// ======== CHARTS ========
+const perfData = [80,82,78,85,83,88,86,81,84,87,82,85,80,83,86,84,88,82,85,87,83,81,86,84,88,85,82,84,87,84];
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawCharts() { drawPerfChart(); drawWeeklyChart(); drawLeagueChart(); }
+function drawPerfChart() {
+    const cv = document.getElementById('performanceChart'); if (!cv) return;
+    const ctx = cv.getContext('2d'), W = cv.parentElement.clientWidth - 40, H = 300;
+    cv.width = W; cv.height = H; ctx.clearRect(0, 0, W, H);
+    const pad = {t:20,r:20,b:40,l:50}, cW = W-pad.l-pad.r, cH = H-pad.t-pad.b, min = 70, max = 95;
+    const gc = cssVar('--border')||'#1f2937', ts = cssVar('--text-sec')||'#6b7280';
+    for (let i = 0; i <= 5; i++) { const y = pad.t + (cH/5)*i; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.strokeStyle = gc; ctx.stroke(); ctx.fillStyle = ts; ctx.font = '11px Inter'; ctx.textAlign = 'right'; ctx.fillText(Math.round(max-((max-min)/5)*i)+'%', pad.l-8, y+4); }
+    const sx = cW/(perfData.length-1);
+    const grad = ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+    grad.addColorStop(0,'rgba(0,255,136,0.3)'); grad.addColorStop(1,'rgba(0,255,136,0)');
+    ctx.beginPath(); perfData.forEach((v,i)=>{const x=pad.l+sx*i,y=pad.t+cH*(1-(v-min)/(max-min)); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(pad.l+sx*(perfData.length-1),H-pad.b); ctx.lineTo(pad.l,H-pad.b); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    ctx.beginPath(); perfData.forEach((v,i)=>{const x=pad.l+sx*i,y=pad.t+cH*(1-(v-min)/(max-min)); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle='#00e676'; ctx.lineWidth=2.5; ctx.stroke();
+    perfData.forEach((v,i)=>{if(i%5===0||i===perfData.length-1){const x=pad.l+sx*i,y=pad.t+cH*(1-(v-min)/(max-min)); ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#00e676'; ctx.fill(); ctx.fillStyle=cssVar('--text')||'#fff'; ctx.font='bold 11px Inter'; ctx.textAlign='center'; ctx.fillText(v+'%',x,y-10);}});
+    ctx.fillStyle=ts; ctx.font='11px Inter'; ctx.textAlign='center';
+    ['J1','J5','J10','J15','J20','J25','J30'].forEach((l,i)=>{ctx.fillText(l,pad.l+(cW/6)*i,H-10);});
+}
+function drawWeeklyChart() {
+    const cv=document.getElementById('weeklyChart'); if(!cv)return;
+    const ctx=cv.getContext('2d'),W=cv.parentElement.clientWidth-40,H=300; cv.width=W;cv.height=H;ctx.clearRect(0,0,W,H);
+    const weeks=['Sem 1','Sem 2','Sem 3','Sem 4'],won=[28,31,29,32],lost=[5,4,6,4],maxV=40,bW=Math.min(60,(W-100)/weeks.length/2.5),gap=(W-100)/weeks.length;
+    const gc=cssVar('--border')||'#1f2937',ts=cssVar('--text-sec')||'#6b7280';
+    for(let i=0;i<=4;i++){const y=30+(240/4)*i;ctx.strokeStyle=gc;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(60,y);ctx.lineTo(W-20,y);ctx.stroke();ctx.fillStyle=ts;ctx.font='11px Inter';ctx.textAlign='right';ctx.fillText(Math.round(maxV-(maxV/4)*i),50,y+4);}
+    weeks.forEach((w,i)=>{const cx=80+gap*i,hW=(won[i]/maxV)*240,hL=(lost[i]/maxV)*240;
+    const gW=ctx.createLinearGradient(0,30+240-hW,0,270);gW.addColorStop(0,'#00e676');gW.addColorStop(1,'#69f0ae');
+    ctx.fillStyle=gW;ctx.beginPath();const rx=4;ctx.moveTo(cx-bW-2,270);ctx.lineTo(cx-bW-2,30+240-hW+rx);ctx.quadraticCurveTo(cx-bW-2,30+240-hW,cx-bW-2+rx,30+240-hW);ctx.lineTo(cx-2-rx,30+240-hW);ctx.quadraticCurveTo(cx-2,30+240-hW,cx-2,30+240-hW+rx);ctx.lineTo(cx-2,270);ctx.fill();
+    ctx.fillStyle='#ef5350';ctx.beginPath();ctx.moveTo(cx+2,270);ctx.lineTo(cx+2,30+240-hL+rx);ctx.quadraticCurveTo(cx+2,30+240-hL,cx+2+rx,30+240-hL);ctx.lineTo(cx+bW+2-rx,30+240-hL);ctx.quadraticCurveTo(cx+bW+2,30+240-hL,cx+bW+2,30+240-hL+rx);ctx.lineTo(cx+bW+2,270);ctx.fill();
+    ctx.fillStyle=ts;ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText(w,cx,290);
+    ctx.fillStyle='#00e676';ctx.font='bold 11px Inter';ctx.fillText(won[i],cx-bW/2-2,30+240-hW-6);
+    ctx.fillStyle='#ef5350';ctx.fillText(lost[i],cx+bW/2+2,30+240-hL-6);});
+    ctx.fillStyle='#00e676';ctx.font='11px Inter';ctx.fillRect(W-140,10,10,10);ctx.fillText('Gagnes',W-125,19);
+    ctx.fillStyle='#ef5350';ctx.fillRect(W-70,10,10,10);ctx.fillText('Perdus',W-55,19);
+}
+function drawLeagueChart() {
+    const cv=document.getElementById('leagueChart'); if(!cv)return;
+    const ctx=cv.getContext('2d'),W=cv.parentElement.clientWidth-40,H=300; cv.width=W;cv.height=H;ctx.clearRect(0,0,W,H);
+    const data=[{n:"Coupes d'Europe",p:35,c:'#ce93d8'},{n:'Ligue 1',p:20,c:'#4fc3f7'},{n:'Premier League',p:18,c:'#81c784'},{n:'La Liga',p:12,c:'#ffab91'},{n:'Serie A',p:8,c:'#64b5f6'},{n:'Autres',p:7,c:'#9ca3af'}];
+    let sa=-Math.PI/2; data.forEach(d=>{const sl=(d.p/100)*Math.PI*2;ctx.beginPath();ctx.moveTo(140,H/2);ctx.arc(140,H/2,100,sa,sa+sl);ctx.closePath();ctx.fillStyle=d.c;ctx.fill();const ma=sa+sl/2;ctx.fillStyle=cssVar('--text')||'#fff';ctx.font='bold 12px Inter';ctx.textAlign=Math.cos(ma)>0?'left':'right';ctx.fillText(d.p+'%',140+Math.cos(ma)*115,H/2+Math.sin(ma)*115);sa+=sl;});
+    let y=40;data.forEach(d=>{ctx.fillStyle=d.c;ctx.fillRect(W-200,y-5,12,12);ctx.fillStyle=cssVar('--text-sec')||'#9ca3af';ctx.font='12px Inter';ctx.textAlign='left';ctx.fillText(d.n+' ('+d.p+'%)',W-180,y+5);y+=28;});
+}
+
+// ======== CONTACT FORM ========
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault(); const btn = this.querySelector('button[type="submit"]');
+    btn.innerHTML = '<i class="fas fa-check"></i> Envoye !'; this.reset();
+    setTimeout(() => { btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer le message'; }, 3000);
+});
+
+// ======== RESULTS ========
+const RESULTS_KEY = 'matchmetrics-results';
+let resultsData = [], currentFilter = 'all', currentDateFilter = 'all';
+function loadResults() { const saved = localStorage.getItem(RESULTS_KEY); resultsData = saved ? JSON.parse(saved) : []; seedTodayPronostics(); }
+function saveResults() { localStorage.setItem(RESULTS_KEY, JSON.stringify(resultsData)); }
+function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+function updateResultStatus(id,status) { const item=resultsData.find(r=>r.id===id); if(item) { item.status=status; item.resolvedAt=new Date().toISOString(); saveResults(); archiveToHistory(); renderResults(); } }
+function deleteResult(id) { if(!confirm('Supprimer ce pronostic ?')) return; resultsData=resultsData.filter(r=>r.id!==id); saveResults(); archiveToHistory(); renderResults(); }
+function filterResults(f) { currentFilter=f; document.querySelectorAll('.results-filters:first-child .filter-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-filter')===f)); renderResults(); }
+function filterResultsByDate(df) { currentDateFilter=df; document.querySelectorAll('.results-filters:last-child .filter-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-datefilter')===df)); renderResults(); }
+function filterPronostics(df) { document.querySelectorAll('.results-controls .filter-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-datefilter')===df)); const now=new Date(), today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'); const y=new Date(now);y.setDate(y.getDate()-1);const yStr=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0'); document.querySelectorAll('.prono-card').forEach(c=>{const d=c.getAttribute('data-date');c.style.display=df==='all'||(df==='today'&&d===today)||(df==='hier'&&d===yStr)||(df==='upcoming'&&d>today)?'':'none';}); }
+function getPredLabel(p, c) { if(p==='custom'&&c)return c; return {home:'Victoire domicile',away:'Victoire exterieure',draw:'Match nul',btts:'Les deux marquent','over2.5':'Plus de 2.5 buts','under2.5':'Moins de 2.5 buts'}[p]||p; }
+function getSportIcon(s) { return {Football:'fa-futbol',Basketball:'fa-basketball-ball',Tennis:'fa-table-tennis-paddle-ball'}[s]||'fa-trophy'; }
+function fmtDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long',year:'numeric'}); }
+function renderResults() {
+    const list=document.getElementById('resultsList'); if(!list) return;
+    const now=new Date(), today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const yesterday=new Date(now); yesterday.setDate(yesterday.getDate()-1);
+    const yStr=yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+    let filtered=currentFilter==='all'?resultsData:resultsData.filter(r=>r.status===currentFilter);
+    if (currentDateFilter==='today') filtered=filtered.filter(r=>r.date===today);
+    else if (currentDateFilter==='hier') filtered=filtered.filter(r=>r.date===yStr);
+    else if (currentDateFilter==='upcoming') filtered=filtered.filter(r=>r.date>today);
+    const total=resultsData.length,won=resultsData.filter(r=>r.status==='won').length,lost=resultsData.filter(r=>r.status==='lost').length,pending=resultsData.filter(r=>r.status==='pending').length;
+    document.getElementById('resTotal').textContent=total; document.getElementById('resWon').textContent=won;
+    document.getElementById('resLost').textContent=lost; document.getElementById('resPending').textContent=pending;
+    if(!filtered.length){list.innerHTML='<div class="results-empty"><i class="fas fa-inbox"></i><p>Aucun pronostic.</p></div>';return;}
+    list.innerHTML=filtered.map(item=>{
+        const sc=item.status;
+        return '<div class="result-card s-'+sc+'"><div class="rc-match"><div class="rc-date"><i class="fas '+getSportIcon(item.sport)+'" style="color:var(--primary);margin-right:0.3rem"></i> '+fmtDate(item.date)+' &middot; '+item.sport+'</div><div class="rc-teams">'+item.home+' <span class="vs">vs</span> '+item.away+'</div><div class="rc-pred"><i class="fas fa-bullseye"></i> '+getPredLabel(item.prediction,item.customPrediction)+(item.confidence?' | Confiance: '+item.confidence+'%':'')+'</div></div><div class="rc-status"><span class="status-badge '+sc+'">'+(sc==='won'?'<i class="fas fa-check-circle"></i> Gagne':sc==='lost'?'<i class="fas fa-times-circle"></i> Perdu':'<i class="fas fa-clock"></i> En attente')+'</span></div>'+(sc!=='won'?'<div class="rc-actions">'+(sc!=='won'?'<button class="action-btn w" onclick="updateResultStatus(\''+item.id+'\',\'won\')"><i class="fas fa-check"></i></button>':'')+(sc==='pending'?'<button class="action-btn l" onclick="updateResultStatus(\''+item.id+'\',\'lost\')"><i class="fas fa-times"></i></button>':'')+(sc==='pending'?'<button class="action-btn d" onclick="deleteResult(\''+item.id+'\')"><i class="fas fa-trash"></i></button>':'')+'</div>':'')+'</div>';
+    }).join('');
+}
+function seedTodayPronostics() {
+    const now=new Date(), today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    resultsData=[
+        {id:generateId(),date:today,sport:'Football',home:'Breidablik',away:'Keflavik',league:'Pepsideild',prediction:'custom',customPrediction:'Over +1.5 BTTS',confidence:88,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Vestri',away:'Fylkir',league:'Pepsideild',prediction:'custom',customPrediction:'Over +0.5 BTTS',confidence:82,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Djurgardens',away:'Halmstads',league:'Allsvenskan',prediction:'custom',customPrediction:'V1 / Over +0.5 BTTS',confidence:85,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Tennis',home:'Borges, Nuno (Portugal)',away:'Kouame, Moise (France)',league:'ATP Bastad, Sweden',prediction:'custom',customPrediction:'Borges, Nuno Wins',confidence:90,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Riga FC (Lettonie)',away:'FC Ararat-Armenia',league:'UEFA Champions League Qualif.',prediction:'custom',customPrediction:'Over +1.5 Goals',confidence:90,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'France',away:'Espagne',league:'FIFA World Cup',prediction:'custom',customPrediction:'France Over +0.5 Goals',confidence:88,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'LASK Linz',away:'Fenerbahce',league:'Club Friendlies',prediction:'custom',customPrediction:'Fenerbahce Over +1.5 Goals',confidence:82,status:'won',createdAt:new Date().toISOString(),resolvedAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Universitatea Craiova',away:'ML Vitebsk',league:'Club Friendlies',prediction:'custom',customPrediction:'Plus de 2,5 buts dans le match',confidence:85,status:'pending',createdAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Atert Bissen',away:'KI Klaksvik',league:'UEFA Conference League Qualif.',prediction:'custom',customPrediction:'KI Klaksvik et Moins de 2,5 buts',confidence:78,status:'pending',createdAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Angleterre',away:'Argentine',league:'FIFA World Cup',prediction:'custom',customPrediction:'Angleterre et Moins de 2,5 buts',confidence:80,status:'pending',createdAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Egnatia',away:'FC Petrocub',league:'UEFA Conference League Qualif.',prediction:'custom',customPrediction:'Moins de 4,5 buts dans le match',confidence:88,status:'pending',createdAt:new Date().toISOString()},
+        {id:generateId(),date:today,sport:'Football',home:'Sutjeska Niksic',away:'Kairat Almaty',league:'UEFA Conference League Qualif.',prediction:'custom',customPrediction:'Victoire de Sutjeska Niksic et Moins de 2,5 buts',confidence:76,status:'pending',createdAt:new Date().toISOString()}
+    ];
+    localStorage.removeItem(HISTORY_KEY);
+    saveResults();
+    archiveToHistory();
+}
+
+// ======== HISTORY ========
+const HISTORY_KEY = 'matchmetrics-history';
+function loadHistory() { const saved = localStorage.getItem(HISTORY_KEY); return saved ? JSON.parse(saved) : []; }
+function archiveToHistory() {
+    var history = loadHistory();
+    var dates = [...new Set(resultsData.map(function(r){return r.date}))];
+    dates.forEach(function(date) {
+        var dayResults = resultsData.filter(function(r){return r.date === date});
+        var existing = history.findIndex(function(h){return h.date === date});
+        var stats = { total: dayResults.length, won: dayResults.filter(function(r){return r.status === 'won'}).length, lost: dayResults.filter(function(r){return r.status === 'lost'}).length, pending: dayResults.filter(function(r){return r.status === 'pending'}).length };
+        var entry = { date: date, pronostics: dayResults.map(function(r){return Object.assign({}, r)}), stats: stats, updatedAt: new Date().toISOString() };
+        if (existing >= 0) history[existing] = entry; else history.push(entry);
+    });
+    history.sort(function(a,b){return b.date.localeCompare(a.date);});
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory();
+}
+function renderHistory() {
+    var container = document.getElementById('historyEntries'); if (!container) return;
+    var history = loadHistory();
+    if (!history.length) { container.innerHTML = '<div class="results-empty"><i class="fas fa-archive"></i><p>Aucun historique.</p></div>'; return; }
+    container.innerHTML = history.map(function(day){
+        var d = new Date(day.date+'T00:00:00');
+        var dateStr = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        var pct = day.stats.total ? Math.round((day.stats.won/day.stats.total)*100) : 0;
+        return '<div class="history-entry"><div class="history-entry-header"><div class="history-entry-date"><i class="fas fa-calendar-day"></i> '+dateStr+'</div><div class="history-entry-stats"><span class="h-stat h-won"><i class="fas fa-check-circle"></i> '+day.stats.won+'</span><span class="h-stat h-lost"><i class="fas fa-times-circle"></i> '+day.stats.lost+'</span><span class="h-stat h-pending"><i class="fas fa-clock"></i> '+day.stats.pending+'</span><span class="h-stat h-pct">'+pct+'%</span></div></div><div class="history-pred-list">'+day.pronostics.map(function(p){var sc=p.status;return '<div class="history-pred-item hpi-'+sc+'"><div class="hpi-match">'+p.home+' <span class="vs">vs</span> '+p.away+'</div><div class="hpi-pred"><i class="fas fa-bullseye"></i> '+getPredLabel(p.prediction,p.customPrediction)+'</div><span class="status-badge '+sc+'">'+(sc==='won'?'Gagne':sc==='lost'?'Perdu':'En attente')+'</span></div>';}).join('')+'</div></div>';
+    }).join('');
+}
+function exportHistory() {
+    var history = loadHistory(); if(!history.length){alert('Aucun historique.');return;}
+    var text='=== MATCHMETRICS - HISTORIQUE ===\n\n';
+    history.forEach(function(day){var d=new Date(day.date+'T00:00:00');text+='--- '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' ---\nStats: '+day.stats.won+' gagnes / '+day.stats.lost+' perdus\n\n';day.pronostics.forEach(function(p){text+='  '+p.home+' vs '+p.away+' | '+getPredLabel(p.prediction,p.customPrediction)+' | '+(p.status==='won'?'GAGNE':p.status==='lost'?'PERDU':'EN ATTENTE')+'\n';});text+='\n';});
+    var blob=new Blob([text],{type:'text/plain;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='matchmetrics-historique-'+new Date().toISOString().split('T')[0]+'.txt';a.click();URL.revokeObjectURL(a.href);
+}
+function clearHistory() { if(!confirm('Effacer tout l\'historique ?')) return; localStorage.removeItem(HISTORY_KEY); renderHistory(); }
+
+// ======== AI CHAT ========
+function addMsg(text, isUser) { const m=document.createElement('div');m.className='ai-msg '+(isUser?'user':'bot');m.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');document.getElementById('aiMsgs').appendChild(m);document.getElementById('aiMsgs').scrollTop=99999; }
+function getAIResponse(input) { const l=input.toLowerCase();
+    if(l.includes('pronostic')||l.includes('jour')) return "Nos analyses quotidiennes sont dans la page **Historique** avec indices de confiance.";
+    if(l.includes('ia')||l.includes('fonctionne')||l.includes('modeles')) return "Nos **modeles statistiques** analysent 200+ variables sur 50 000+ matchs avec un taux de 84%.";
+    if(l.includes('tarif')||l.includes('prix')||l.includes('abonnement')||l.includes('fcfa')) return "Premium a **2 500 FCFA/mois**. Acces complet, alertes temps reel, support 24/7.";
+    if(l.includes('contact')||l.includes('email')) return "Email : **contact@matchmetrics.fr** | WhatsApp : **+225 07 08 09 10**";
+    if(l.includes('reussite')||l.includes('taux')) return "Taux moyen : **84%** (312 gagnes / 58 perdus). Verifiable dans **Historique**.";
+    if(l.includes('bonjour')||l.includes('salut')) return "Bonjour ! Comment puis-je vous aider ?";
+    if(l.includes('responsable')||l.includes('risque')) return "Pariez uniquement ce que vous pouvez vous permettre de perdre. 84% moyen, aucun systeme ne garantit 100%.";
+    return "Je peux vous renseigner sur nos **analyses**, **modeles**, **tarifs**, ou **support**.";
+}
+document.getElementById('aiToggle').addEventListener('click',e=>{e.stopPropagation();document.getElementById('aiWindow').classList.toggle('active');});
+document.getElementById('aiClose').addEventListener('click',()=>document.getElementById('aiWindow').classList.remove('active'));
+document.getElementById('aiSend').addEventListener('click',()=>{const v=document.getElementById('aiInput').value.trim();if(!v)return;addMsg(v,true);document.getElementById('aiInput').value='';setTimeout(()=>addMsg(getAIResponse(v),false),500);});
+document.getElementById('aiInput').addEventListener('keypress',e=>{if(e.key==='Enter')document.getElementById('aiSend').click();});
+document.querySelectorAll('.sug-btn').forEach(b=>b.addEventListener('click',()=>{document.getElementById('aiInput').value=b.getAttribute('data-msg');document.getElementById('aiSend').click();}));
+
+// ======== INIT ========
+function handleInitialNavigation() {
+    if (!isLoggedIn()) {
+        const h = window.location.hash.replace('#','') || 'accueil';
+        if (publicPages.indexOf(h) !== -1) {
+            navigateTo(h);
+        } else {
+            openLoginModal();
+            document.getElementById('loginOverlay').classList.add('full-lock');
+        }
+        if (!window.location.hash) history.replaceState(null, '', '#accueil');
+    } else {
+        const h = window.location.hash || '#accueil';
+        navigateTo(h);
+        if (!window.location.hash) history.replaceState(null, '', '#accueil');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    createParticles();
+    loadResults();
+    renderHistory();
+
+    // Recupere la session existante (utilisateur deja connecte) avant d'afficher la page
+    const { data } = await _sb.auth.getSession();
+    currentSession = data.session;
+    updateAuthUI();
+    handleInitialNavigation();
+
+    // Reagit a tout changement d'etat d'authentification (connexion, deconnexion, refresh de token)
+    _sb.auth.onAuthStateChange((_event, session) => {
+        currentSession = session;
+        updateAuthUI();
+    });
+});
+</script>
+</body>
+</html>
